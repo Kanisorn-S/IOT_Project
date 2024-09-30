@@ -38,7 +38,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 // Basic Threshold
-#define TEMP_THRESHOLD 10
+#define TEMP_THRESHOLD 30
+#define ALC_THRESHOLD 400
 
 // DHT22
 #define DHT22_PORT GPIOB
