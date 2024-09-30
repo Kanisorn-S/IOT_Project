@@ -24,12 +24,12 @@
 #define TCS3200_OFREQ_100P 0x03
 
 // Define MIN/MAX Frequency Each Color
-#define MIN_RED 306
-#define MAX_RED 3816
-#define MIN_GREEN 311
-#define MAX_GREEN 3937
-#define MIN_BLUE 374
-#define MAX_BLUE 4016
+#define MIN_RED 616
+#define MAX_RED 2941
+#define MIN_GREEN 666
+#define MAX_GREEN 3095
+#define MIN_BLUE 800
+#define MAX_BLUE 3533
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim);
 void TCS3200_Freq_Scaling(uint8_t scaling);
