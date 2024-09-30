@@ -149,7 +149,11 @@ int main(void)
 	  uint32_t green_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_GREEN);
 	  uint32_t blue_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_BLUE);
 
-	  sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_frequency, green_frequency, blue_frequency);
+    uint8_t red_hex = MapFrequencyToHex(red_frequency, MIN_RED, MAX_RED);
+    uint8_t green_hex = MapFrequencyToHex(green_frequency, MIN_GREEN, MAX_GREEN);
+    uint8_t blue_hex = MapFrequencyToHex(blue_frequency, MIN_BLUE, MAX_BLUE);
+
+	  sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_hex, green_hex, blue_hex);
 
 	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1, 20);
