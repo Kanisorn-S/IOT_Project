@@ -139,37 +139,40 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 	  if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
-	  		DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
-	  		sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
-	  }
+	  	  		DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
+	  	  		sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
+	  	  }
 
-	  uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
-	  uint32_t green_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_GREEN);
-	  uint32_t blue_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_BLUE);
+	  	  uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
+	  	  uint32_t green_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_GREEN);
+	  	  uint32_t blue_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_BLUE);
 
-    uint8_t red_hex = MapFrequencyToHex(red_frequency, MIN_RED, MAX_RED);
-    uint8_t green_hex = MapFrequencyToHex(green_frequency, MIN_GREEN, MAX_GREEN);
-    uint8_t blue_hex = MapFrequencyToHex(blue_frequency, MIN_BLUE, MAX_BLUE);
+	      uint8_t red_hex = MapFrequencyToHex(red_frequency, MIN_RED, MAX_RED);
+	      uint8_t green_hex = MapFrequencyToHex(green_frequency, MIN_GREEN, MAX_GREEN);
+	      uint8_t blue_hex = MapFrequencyToHex(blue_frequency, MIN_BLUE, MAX_BLUE);
 
-	  sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_hex, green_hex, blue_hex);
+	  	  sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_hex, green_hex, blue_hex);
 
-	  HAL_ADC_Start(&hadc1);
-	  HAL_ADC_PollForConversion(&hadc1, 20);
-	  alcohol_level = HAL_ADC_GetValue(&hadc1);
-	  sprintf(mq3_readings, "Alc: %d\r\n", alcohol_level);
+	  	  HAL_ADC_Start(&hadc1);
+	  	  HAL_ADC_PollForConversion(&hadc1, 20);
+	  	  alcohol_level = HAL_ADC_GetValue(&hadc1);
+	  	  sprintf(mq3_readings, "Alc: %d\r\n", alcohol_level);
 
-	  sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nTCS3200 Reading: %s\r\n", dht22_readings, mq3_readings, tcs3200_readings);
-	  HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
-	  if (!isBuzzerOn && DHT_22.temp_C >= TEMP_THRESHOLD) {
-	  	// Active_Buzzer_On(buzzer);
-	  	isBuzzerOn = true;
-	  } else if (isBuzzerOn && DHT_22.temp_C < TEMP_THRESHOLD){
-	  	// Active_Buzzer_Off(buzzer);
-	  	isBuzzerOn = false;
-	  }
-	  HAL_Delay(1000);
+	  	  sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nTCS3200 Reading: %s\r\n", dht22_readings, mq3_readings, tcs3200_readings);
+	  	  HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
+	  	  if (!isBuzzerOn && DHT_22.temp_C >= TEMP_THRESHOLD) {
+	  	  	// Active_Buzzer_On(buzzer);
+	  		// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+	  	  	isBuzzerOn = true;
+	  	  } else if (isBuzzerOn && DHT_22.temp_C < TEMP_THRESHOLD){
+	  	  	// Active_Buzzer_Off(buzzer);
+	  		// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+	  	  	isBuzzerOn = false;
+	  	  }
+	  	  HAL_Delay(1000);
+    /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -431,6 +434,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -442,6 +448,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
