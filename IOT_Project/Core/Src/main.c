@@ -159,10 +159,10 @@ int main(void)
 	  sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nTCS3200 Reading: %s\r\n", dht22_readings, mq3_readings, tcs3200_readings);
 	  HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
 	  if (!isBuzzerOn && DHT_22.temp_C >= TEMP_THRESHOLD) {
-	  	Active_Buzzer_On(buzzer);
+	  	// Active_Buzzer_On(buzzer);
 	  	isBuzzerOn = true;
 	  } else if (isBuzzerOn && DHT_22.temp_C < TEMP_THRESHOLD){
-	  	Active_Buzzer_Off(buzzer);
+	  	// Active_Buzzer_Off(buzzer);
 	  	isBuzzerOn = false;
 	  }
 	  HAL_Delay(1000);
