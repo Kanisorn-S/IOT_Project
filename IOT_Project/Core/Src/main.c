@@ -37,9 +37,46 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// Threshold for each fruit
+// Apple
+#define TEMP_APPLE_MIN 0
+#define TEMP_APPLE_MAX 0
+#define HUM_APPLE_MIN
+#define HUM_APPLE_MAX
+#define COLOR_APPLE_MIN_RED
+#define COLOR_APPLE_MAX_RED
+#define COLOR_APPLE_MIN_GREEN
+#define COLOR_APPLE_MAX_GREEN
+#define COLOR_APPLE_MIN_BLUE
+#define COLOR_APPLE_MAX_BLUE
+
+// Banana
+#define TEMP_BANANA_MIN
+#define TEMP_BANANA_MAX
+#define HUM_BANANA_MIN
+#define HUM_BANANA_MAX
+#define COLOR_BANANA_MIN_RED
+#define COLOR_BANANA_MAX_RED
+#define COLOR_BANANA_MIN_GREEN
+#define COLOR_BANANA_MAX_GREEN
+#define COLOR_BANANA_MIN_BLUE
+#define COLOR_BANANA_MAX_BLUE
+
+// Mango
+#define TEMP_MANGO_MIN
+#define TEMP_MANGO_MAX
+#define HUM_MANGO_MIN
+#define HUM_MANGO_MAX
+#define COLOR_MANGO_MIN_RED
+#define COLOR_MANGO_MAX_RED
+#define COLOR_MANGO_MIN_GREEN
+#define COLOR_MANGO_MAX_GREEN
+#define COLOR_MANGO_MIN_BLUE
+#define COLOR_MANGO_MAX_BLUE
+
 // Basic Threshold
 #define TEMP_THRESHOLD 30
-#define ALC_THRESHOLD 400
+#define ALCOHOL_THRESHOLD 400
 
 // DHT22
 #define DHT22_PORT GPIOB
@@ -48,6 +85,9 @@
 // Active Buzzer
 #define BUZZER_PORT GPIOC
 #define BUZZER_PIN GPIO_PIN_3
+
+// Current Fruit
+#define FRUIT "apple"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -134,6 +174,45 @@ int main(void)
   Active_Buzzer buzzer = Active_Buzzer_Init(BUZZER_PORT, BUZZER_PIN);
   bool isBuzzerOn = false;
   char buff[100];
+
+      float min_temp, max_temp, min_hum, max_hum;
+      uint8_t min_red, max_red, min_green, max_green, min_blue, max_blue;
+
+      // Set thresholds based on the fruit
+      if (strcmp(FRUIT, "apple") == 0) {
+          min_temp = TEMP_APPLE_MIN;
+          max_temp = TEMP_APPLE_MAX;
+          min_hum = HUM_APPLE_MIN;
+          max_hum = HUM_APPLE_MAX;
+          min_red = COLOR_APPLE_MIN_RED;
+          max_red = COLOR_APPLE_MAX_RED;
+          min_green = COLOR_APPLE_MIN_GREEN;
+          max_green = COLOR_APPLE_MAX_GREEN;
+          min_blue = COLOR_APPLE_MIN_BLUE;
+          max_blue = COLOR_APPLE_MAX_BLUE;
+      } else if (strcmp(FRUIT, "banana") == 0) {
+          min_temp = TEMP_BANANA_MIN;
+          max_temp = TEMP_BANANA_MAX;
+          min_hum = HUM_BANANA_MIN;
+          max_hum = HUM_BANANA_MAX;
+          min_red = COLOR_BANANA_MIN_RED;
+          max_red = COLOR_BANANA_MAX_RED;
+          min_green = COLOR_BANANA_MIN_GREEN;
+          max_green = COLOR_BANANA_MAX_GREEN;
+          min_blue = COLOR_BANANA_MIN_BLUE;
+          max_blue = COLOR_BANANA_MAX_BLUE;
+      } else if (strcmp(FRUIT, "mango") == 0) {
+          min_temp = TEMP_MANGO_MIN;
+          max_temp = TEMP_MANGO_MAX;
+          min_hum = HUM_MANGO_MIN;
+          max_hum = HUM_MANGO_MAX;
+          min_red = COLOR_MANGO_MIN_RED;
+          max_red = COLOR_MANGO_MAX_RED;
+          min_green = COLOR_MANGO_MIN_GREEN;
+          max_green = COLOR_MANGO_MAX_GREEN;
+          min_blue = COLOR_MANGO_MIN_BLUE;
+          max_blue = COLOR_MANGO_MAX_BLUE;
+   }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -162,15 +241,41 @@ int main(void)
 
 	  	  sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nTCS3200 Reading: %s\r\n", dht22_readings, mq3_readings, tcs3200_readings);
 	  	  HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
-	  	  if (!isBuzzerOn && DHT_22.temp_C >= TEMP_THRESHOLD) {
-	  	  	// Active_Buzzer_On(buzzer);
-	  		// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-	  	  	isBuzzerOn = true;
-	  	  } else if (isBuzzerOn && DHT_22.temp_C < TEMP_THRESHOLD){
-	  	  	// Active_Buzzer_Off(buzzer);
-	  		// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-	  	  	isBuzzerOn = false;
+
+	  	  // Check if temperature and humidity are within range
+	  	  bool temp_check = (DHT_22.temp_C >= min_temp && DHT_22.temp_C <= max_temp);
+	  	  bool hum_check = (DHT_22.humidity >= min_hum && DHT_22.humidity <= max_hum);
+	  	  // If temperature or humidity exceeds limits, check gas and color sensors
+	  	  bool alcohol_check = (alcohol_level < ALCOHOL_THRESHOLD);
+	  	  bool color_check = (red_hex >= min_red && red_hex <= max_red &&
+							green_hex >= min_green && green_hex <= max_green &&
+							blue_hex >= min_blue && blue_hex <= max_blue);
+	  	  char status[100];
+	  	  sprintf(status, "%s Condition - Temp: %s, Hum: %s, Alcohol: %s, Color: %s\r\n", FRUIT,
+	  	            temp_check ? "OK" : "FAIL",
+	  	            hum_check ? "OK" : "FAIL",
+	  	            alcohol_check ? "OK" : "FAIL",
+	  	            color_check ? "OK" : "FAIL");
+
+	  	  HAL_UART_Transmit(&huart2, (uint8_t*)status, strlen(status), 1000);
+
+	  	  // If temperature or humidity exceeds limit, check gas or color sensor and activate buzzer if needed
+	  	  if (!isBuzzerOn && ((!temp_check || !hum_check) && (!alcohol_check || !color_check))) {
+	  		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);  // Turn on buzzer
+	  		  isBuzzerOn = true;
+	  	  } else if (isBuzzerOn && temp_check && hum_check && alcohol_check && color_check) {
+	  		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);    // Turn off buzzer
+	  		  isBuzzerOn = false;
 	  	  }
+//	  	  if (!isBuzzerOn && DHT_22.temp_C >= TEMP_THRESHOLD) {
+//	  	  	// Active_Buzzer_On(buzzer);
+//	  		// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+//	  	  	isBuzzerOn = true;
+//	  	  } else if (isBuzzerOn && DHT_22.temp_C < TEMP_THRESHOLD){
+//	  	  	// Active_Buzzer_Off(buzzer);
+//	  		// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+//	  	  	isBuzzerOn = false;
+//	  	  }
 	  	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
