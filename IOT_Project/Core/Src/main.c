@@ -41,42 +41,43 @@
 // Apple
 #define TEMP_APPLE_MIN 0
 #define TEMP_APPLE_MAX 0
-#define HUM_APPLE_MIN
-#define HUM_APPLE_MAX
-#define COLOR_APPLE_MIN_RED
-#define COLOR_APPLE_MAX_RED
-#define COLOR_APPLE_MIN_GREEN
-#define COLOR_APPLE_MAX_GREEN
-#define COLOR_APPLE_MIN_BLUE
-#define COLOR_APPLE_MAX_BLUE
+#define HUM_APPLE_MIN 0
+#define HUM_APPLE_MAX 0
+#define COLOR_APPLE_MIN_RED 0 
+#define COLOR_APPLE_MAX_RED 0
+#define COLOR_APPLE_MIN_GREEN 0
+#define COLOR_APPLE_MAX_GREEN 0
+#define COLOR_APPLE_MIN_BLUE 0 
+#define COLOR_APPLE_MAX_BLUE 0
 
 // Banana
-#define TEMP_BANANA_MIN
-#define TEMP_BANANA_MAX
-#define HUM_BANANA_MIN
-#define HUM_BANANA_MAX
-#define COLOR_BANANA_MIN_RED
-#define COLOR_BANANA_MAX_RED
-#define COLOR_BANANA_MIN_GREEN
-#define COLOR_BANANA_MAX_GREEN
-#define COLOR_BANANA_MIN_BLUE
-#define COLOR_BANANA_MAX_BLUE
+#define TEMP_BANANA_MIN 0
+#define TEMP_BANANA_MAX 0
+#define HUM_BANANA_MIN 0
+#define HUM_BANANA_MAX 0
+#define COLOR_BANANA_MIN_RED 0
+#define COLOR_BANANA_MAX_RED 0
+#define COLOR_BANANA_MIN_GREEN 0
+#define COLOR_BANANA_MAX_GREEN 0
+#define COLOR_BANANA_MIN_BLUE 0
+#define COLOR_BANANA_MAX_BLUE 0
 
 // Mango
-#define TEMP_MANGO_MIN
-#define TEMP_MANGO_MAX
-#define HUM_MANGO_MIN
-#define HUM_MANGO_MAX
-#define COLOR_MANGO_MIN_RED
-#define COLOR_MANGO_MAX_RED
-#define COLOR_MANGO_MIN_GREEN
-#define COLOR_MANGO_MAX_GREEN
-#define COLOR_MANGO_MIN_BLUE
-#define COLOR_MANGO_MAX_BLUE
+#define TEMP_MANGO_MIN 0 
+#define TEMP_MANGO_MAX 0
+#define HUM_MANGO_MIN 0
+#define HUM_MANGO_MAX 0
+#define COLOR_MANGO_MIN_RED 0
+#define COLOR_MANGO_MAX_RED 0
+#define COLOR_MANGO_MIN_GREEN 0
+#define COLOR_MANGO_MAX_GREEN 0
+#define COLOR_MANGO_MIN_BLUE 0
+#define COLOR_MANGO_MAX_BLUE 0
 
 // Basic Threshold
 #define TEMP_THRESHOLD 30
 #define ALCOHOL_THRESHOLD 400
+#define LAB_COLOR_THRESHOLD 0.5
 
 // DHT22
 #define DHT22_PORT GPIOB
@@ -117,6 +118,7 @@ char mq3_readings[50];
 
 // TCS3200
 char tcs3200_readings[50];
+char l_l0[50];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -127,7 +129,7 @@ static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
-
+void rgb2lab(float R, float G, float B) 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -213,6 +215,9 @@ int main(void)
           min_blue = COLOR_MANGO_MIN_BLUE;
           max_blue = COLOR_MANGO_MAX_BLUE;
    }
+  float L0 = 1;
+  float L;
+  bool is_fist_loop = true;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -234,12 +239,21 @@ int main(void)
 
 	  	  sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_hex, green_hex, blue_hex);
 
+        if (is_first_loop) {
+          L0 = rgb2lab(red_hex, green_hex, blue_hex);
+          sprintf(l_l0, "Calibrating");
+          is_first_loop = false
+        } else {
+          L = rgb2lab(red_hex, green_hex, blue_hex) / L0;
+          sprintf(l_l0, "L/L0: %.2f\r\n", L);
+        }
+
 	  	  HAL_ADC_Start(&hadc1);
 	  	  HAL_ADC_PollForConversion(&hadc1, 20);
 	  	  alcohol_level = HAL_ADC_GetValue(&hadc1);
 	  	  sprintf(mq3_readings, "Alc: %d\r\n", alcohol_level);
 
-	  	  sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nTCS3200 Reading: %s\r\n", dht22_readings, mq3_readings, tcs3200_readings);
+	  	  sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nTCS3200 Reading: %s\r\n Converted Color: %s\r\n", dht22_readings, mq3_readings, tcs3200_readings, l_l0);
 	  	  HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
 
 	  	  // Check if temperature and humidity are within range
@@ -250,6 +264,7 @@ int main(void)
 	  	  bool color_check = (red_hex >= min_red && red_hex <= max_red &&
 							green_hex >= min_green && green_hex <= max_green &&
 							blue_hex >= min_blue && blue_hex <= max_blue);
+        bool lab_color_check = L < LAB_COLOR_THRESHOLD;
 	  	  char status[100];
 	  	  sprintf(status, "%s Condition - Temp: %s, Hum: %s, Alcohol: %s, Color: %s\r\n", FRUIT,
 	  	            temp_check ? "OK" : "FAIL",
@@ -583,7 +598,49 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// using https://web.archive.org/web/20111111080001/http://www.easyrgb.com/index.php?X=MATH&H=01#tex1
+void rgb2lab(float R, float G, float B) 
+{
+    float var_R = R/255.0;
+    float var_G = G/255.0;
+    float var_B = B/255.0;
 
+
+    if ( var_R > 0.04045 ) var_R = pow( (( var_R + 0.055 ) / 1.055 ), 2.4 );
+    else                   var_R = var_R / 12.92;
+    if ( var_G > 0.04045 ) var_G = pow( ( ( var_G + 0.055 ) / 1.055 ), 2.4);
+    else                   var_G = var_G / 12.92;
+    if ( var_B > 0.04045 ) var_B = pow( ( ( var_B + 0.055 ) / 1.055 ), 2.4);
+    else                   var_B = var_B / 12.92;
+
+    var_R = var_R * 100.;
+    var_G = var_G * 100.;
+    var_B = var_B * 100.;
+
+    //Observer. = 2°, Illuminant = D65
+    float X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
+    float Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
+    float Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
+
+
+    float var_X = X / 95.047 ;         //ref_X =  95.047   Observer= 2°, Illuminant= D65
+    float var_Y = Y / 100.000;          //ref_Y = 100.000
+    float var_Z = Z / 108.883;          //ref_Z = 108.883
+
+    if ( var_X > 0.008856 ) var_X = pow(var_X , ( 1./3. ) );
+    else                    var_X = ( 7.787 * var_X ) + ( 16. / 116. );
+    if ( var_Y > 0.008856 ) var_Y = pow(var_Y , ( 1./3. ));
+    else                    var_Y = ( 7.787 * var_Y ) + ( 16. / 116. );
+    if ( var_Z > 0.008856 ) var_Z = pow(var_Z , ( 1./3. ));
+    else                    var_Z = ( 7.787 * var_Z ) + ( 16. / 116. );
+
+    float l_s = ( 116. * var_Y ) - 16.;
+    float a_s = 500. * ( var_X - var_Y );
+    float b_s = 200. * ( var_Y - var_Z );
+
+    return l_s, a_s, b_s;
+
+}
 /* USER CODE END 4 */
 
 /**
