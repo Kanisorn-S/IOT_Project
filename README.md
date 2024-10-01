@@ -7,7 +7,7 @@
 - Active Buzzer
 
 ## Connection and Circuit Diagram
-![image](https://github.com/user-attachments/assets/3aa6c1a3-b580-4211-87a9-c2094b5469eb)
+![image](https://github.com/user-attachments/assets/bfc55b73-6416-45ff-8c6e-e9e7af903a88)
 
 ## Variables and Methods for Used
 - TCS3200 Color Sensor:
