@@ -172,7 +172,7 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim1);
-  TCS3200_Freq_Scaling(TCS3200_OFREQ_2P);
+  TCS3200_Freq_Scaling(TCS3200_OFREQ_20P);
   Active_Buzzer buzzer = Active_Buzzer_Init(BUZZER_PORT, BUZZER_PIN);
   bool isBuzzerOn = false;
   char buff[100];
@@ -276,10 +276,10 @@ int main(void)
 
 	  	  // If temperature or humidity exceeds limit, check gas or color sensor and activate buzzer if needed
 	  	  if (!isBuzzerOn && ((!temp_check || !hum_check) && (!alcohol_check || !color_check))) {
-	  		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);  // Turn on buzzer
+	  		  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);  // Turn on buzzer
 	  		  isBuzzerOn = true;
 	  	  } else if (isBuzzerOn && temp_check && hum_check && alcohol_check && color_check) {
-	  		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);    // Turn off buzzer
+	  		  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);    // Turn off buzzer
 	  		  isBuzzerOn = false;
 	  	  }
 //	  	  if (!isBuzzerOn && DHT_22.temp_C >= TEMP_THRESHOLD) {
