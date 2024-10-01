@@ -129,7 +129,7 @@ static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
-void rgb2lab(float R, float G, float B) 
+float rgb2lab(float R, float G, float B);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -217,7 +217,7 @@ int main(void)
    }
   float L0 = 1;
   float L;
-  bool is_fist_loop = true;
+  bool is_first_loop = true;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -242,7 +242,7 @@ int main(void)
         if (is_first_loop) {
           L0 = rgb2lab(red_hex, green_hex, blue_hex);
           sprintf(l_l0, "Calibrating");
-          is_first_loop = false
+          is_first_loop = false;
         } else {
           L = rgb2lab(red_hex, green_hex, blue_hex) / L0;
           sprintf(l_l0, "L/L0: %.2f\r\n", L);
@@ -599,7 +599,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 // using https://web.archive.org/web/20111111080001/http://www.easyrgb.com/index.php?X=MATH&H=01#tex1
-void rgb2lab(float R, float G, float B) 
+float rgb2lab(float R, float G, float B)
 {
     float var_R = R/255.0;
     float var_G = G/255.0;
@@ -638,7 +638,7 @@ void rgb2lab(float R, float G, float B)
     float a_s = 500. * ( var_X - var_Y );
     float b_s = 200. * ( var_Y - var_Z );
 
-    return l_s, a_s, b_s;
+    return l_s;
 
 }
 /* USER CODE END 4 */
