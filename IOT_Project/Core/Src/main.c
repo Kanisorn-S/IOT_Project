@@ -39,45 +39,34 @@
 /* USER CODE BEGIN PD */
 // Threshold for each fruit
 // Apple
-#define TEMP_APPLE_MIN 0
-#define TEMP_APPLE_MAX 0
-#define HUM_APPLE_MIN 0
-#define HUM_APPLE_MAX 0
-#define COLOR_APPLE_MIN_RED 0 
-#define COLOR_APPLE_MAX_RED 0
-#define COLOR_APPLE_MIN_GREEN 0
-#define COLOR_APPLE_MAX_GREEN 0
-#define COLOR_APPLE_MIN_BLUE 0 
-#define COLOR_APPLE_MAX_BLUE 0
+#define HUM_APPLE_MIN 90
+#define HUM_APPLE_MAX 95
+#define ALC_APPLE 102.604
+#define L_APPLE 0.84
+#define CC_APPLE 16.5
+#define BI_APPLE 1.7
+
 
 // Banana
-#define TEMP_BANANA_MIN 0
-#define TEMP_BANANA_MAX 0
-#define HUM_BANANA_MIN 0
-#define HUM_BANANA_MAX 0
-#define COLOR_BANANA_MIN_RED 0
-#define COLOR_BANANA_MAX_RED 0
-#define COLOR_BANANA_MIN_GREEN 0
-#define COLOR_BANANA_MAX_GREEN 0
-#define COLOR_BANANA_MIN_BLUE 0
-#define COLOR_BANANA_MAX_BLUE 0
+#define HUM_BANANA_MIN 80
+#define HUM_BANANA_MAX 95
+#define ALC_BANANA 42.488
+#define L_BANANA 0.36
+#define CC_BANANA 65
+#define BI_BANANA 3.65
+
 
 // Mango
-#define TEMP_MANGO_MIN 0 
-#define TEMP_MANGO_MAX 0
-#define HUM_MANGO_MIN 0
-#define HUM_MANGO_MAX 0
-#define COLOR_MANGO_MIN_RED 0
-#define COLOR_MANGO_MAX_RED 0
-#define COLOR_MANGO_MIN_GREEN 0
-#define COLOR_MANGO_MAX_GREEN 0
-#define COLOR_MANGO_MIN_BLUE 0
-#define COLOR_MANGO_MAX_BLUE 0
+#define HUM_MANGO_MIN 90
+#define HUM_MANGO_MAX 95
+#define ALC_MANGO 67.29
+#define L_MANGO 0.95
+#define CC_MANGO 13.5
+#define BI_MANGO 1.6
+
 
 // Basic Threshold
-#define TEMP_THRESHOLD 30
-#define ALCOHOL_THRESHOLD 400
-#define LAB_COLOR_THRESHOLD 0.5
+#define TEMP_THRESHOLD 28
 
 // DHT22
 #define DHT22_PORT GPIOB
@@ -87,8 +76,12 @@
 #define BUZZER_PORT GPIOC
 #define BUZZER_PIN GPIO_PIN_3
 
+// General Settings
+#define CALIBRATION_TIME 10
+#define STATUS_DEBOUNCE_TIME 10
+
 // Current Fruit
-#define FRUIT "apple"
+#define FRUIT "banana"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -114,11 +107,27 @@ uint32_t *pCMillis = &cMillis;
 
 // MQ3
 volatile uint16_t alcohol_level;
+uint16_t alc_0;
 char mq3_readings[50];
 
 // TCS3200
 char tcs3200_readings[50];
-char l_l0[50];
+float hum_0;
+char l_l0[100];
+
+// Color Variables
+float l_0 = 1;
+float a_0 = 1;
+float b_0 = 1;
+float l, a, b;
+float normalized_l;
+float normalized_hue;
+float color_change;
+float normalized_browning_index;
+
+// Diff variables
+float hum_diff;
+float alc_diff;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -129,12 +138,22 @@ static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
-float rgb2lab(float R, float G, float B);
+void convert_colors(float R, float G, float B, float* l, float* a, float* b);
+int check_fruit_condition(float temperature, float alc_level, float alc_threshold, float humidity, float hum_min, float hum_max, float l_value, float l_threshold, float bi_value, float bi_threshold, float cc_value, float cc_threshold);
+void get_variables(float l_0, float a_0, float b_0, float l, float a, float b, float* normalized_l, float* normalized_hue, float* color_change, float* normalized_browning_index);
+float convert_to_percentage_diff(float current_value, float initial_value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+bool started = true;
+//
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+//{
+//	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
+//		started = !started;
+//	}
+//}
 /* USER CODE END 0 */
 
 /**
@@ -175,122 +194,117 @@ int main(void)
   TCS3200_Freq_Scaling(TCS3200_OFREQ_20P);
   Active_Buzzer buzzer = Active_Buzzer_Init(BUZZER_PORT, BUZZER_PIN);
   bool isBuzzerOn = false;
-  char buff[100];
+  bool is_first_loop = true;
+  char buff[200];
 
-      float min_temp, max_temp, min_hum, max_hum;
-      uint8_t min_red, max_red, min_green, max_green, min_blue, max_blue;
+      float min_hum, max_hum, max_alc, min_l, max_cc, max_bi;
 
       // Set thresholds based on the fruit
       if (strcmp(FRUIT, "apple") == 0) {
-          min_temp = TEMP_APPLE_MIN;
-          max_temp = TEMP_APPLE_MAX;
           min_hum = HUM_APPLE_MIN;
           max_hum = HUM_APPLE_MAX;
-          min_red = COLOR_APPLE_MIN_RED;
-          max_red = COLOR_APPLE_MAX_RED;
-          min_green = COLOR_APPLE_MIN_GREEN;
-          max_green = COLOR_APPLE_MAX_GREEN;
-          min_blue = COLOR_APPLE_MIN_BLUE;
-          max_blue = COLOR_APPLE_MAX_BLUE;
+          max_alc = ALC_APPLE;
+          min_l = L_APPLE;
+          max_cc = CC_APPLE;
+          max_bi = BI_APPLE;
       } else if (strcmp(FRUIT, "banana") == 0) {
-          min_temp = TEMP_BANANA_MIN;
-          max_temp = TEMP_BANANA_MAX;
-          min_hum = HUM_BANANA_MIN;
-          max_hum = HUM_BANANA_MAX;
-          min_red = COLOR_BANANA_MIN_RED;
-          max_red = COLOR_BANANA_MAX_RED;
-          min_green = COLOR_BANANA_MIN_GREEN;
-          max_green = COLOR_BANANA_MAX_GREEN;
-          min_blue = COLOR_BANANA_MIN_BLUE;
-          max_blue = COLOR_BANANA_MAX_BLUE;
+    	  min_hum = HUM_BANANA_MIN;
+    	  max_hum = HUM_BANANA_MAX;
+    	  max_alc = ALC_BANANA;
+    	  min_l = L_BANANA;
+    	  max_cc = CC_BANANA;
+    	  max_bi = BI_BANANA;
       } else if (strcmp(FRUIT, "mango") == 0) {
-          min_temp = TEMP_MANGO_MIN;
-          max_temp = TEMP_MANGO_MAX;
-          min_hum = HUM_MANGO_MIN;
-          max_hum = HUM_MANGO_MAX;
-          min_red = COLOR_MANGO_MIN_RED;
-          max_red = COLOR_MANGO_MAX_RED;
-          min_green = COLOR_MANGO_MIN_GREEN;
-          max_green = COLOR_MANGO_MAX_GREEN;
-          min_blue = COLOR_MANGO_MIN_BLUE;
-          max_blue = COLOR_MANGO_MAX_BLUE;
+    	  min_hum = HUM_MANGO_MIN;
+    	  max_hum = HUM_MANGO_MAX;
+    	  max_alc = ALC_MANGO;
+    	  min_l = L_MANGO;
+    	  max_cc = CC_MANGO;
+    	  max_bi = BI_MANGO;
    }
-  float L0 = 1;
-  float L;
-  bool is_first_loop = true;
+      int i = 0;
+      int status_debounce = 0;
+      int prev_status = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
-	  	  		DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
-	  	  		sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
-	  	  }
+	  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
+		  HAL_Delay(10);
+		  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
+			  while(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0);
+			  HAL_Delay(10);
+			  started = true;
+		  }
+	  }
+	  if(started) {
+		  if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
+		  	  	  		DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
+		  	  	  }
 
-	  	  uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
-	  	  uint32_t green_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_GREEN);
-	  	  uint32_t blue_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_BLUE);
+		  	  	  uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
+		  	  	  uint32_t green_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_GREEN);
+		  	  	  uint32_t blue_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_BLUE);
 
-	      uint8_t red_hex = MapFrequencyToHex(red_frequency, MIN_RED, MAX_RED);
-	      uint8_t green_hex = MapFrequencyToHex(green_frequency, MIN_GREEN, MAX_GREEN);
-	      uint8_t blue_hex = MapFrequencyToHex(blue_frequency, MIN_BLUE, MAX_BLUE);
+		  	      uint8_t red_hex = MapFrequencyToHex(red_frequency, MIN_RED, MAX_RED);
+		  	      uint8_t green_hex = MapFrequencyToHex(green_frequency, MIN_GREEN, MAX_GREEN);
+		  	      uint8_t blue_hex = MapFrequencyToHex(blue_frequency, MIN_BLUE, MAX_BLUE);
 
-	  	  sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_hex, green_hex, blue_hex);
+		  	  	  sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_hex, green_hex, blue_hex);
 
-        if (is_first_loop) {
-          L0 = rgb2lab(red_hex, green_hex, blue_hex);
-          sprintf(l_l0, "Calibrating");
-          is_first_loop = false;
-        } else {
-          L = rgb2lab(red_hex, green_hex, blue_hex) / L0;
-          sprintf(l_l0, "L/L0: %.2f\r\n", L);
-        }
+		  	  	  HAL_ADC_Start(&hadc1);
+		  	  	  HAL_ADC_PollForConversion(&hadc1, 20);
+		  	  	  alcohol_level = HAL_ADC_GetValue(&hadc1);
 
-	  	  HAL_ADC_Start(&hadc1);
-	  	  HAL_ADC_PollForConversion(&hadc1, 20);
-	  	  alcohol_level = HAL_ADC_GetValue(&hadc1);
-	  	  sprintf(mq3_readings, "Alc: %d\r\n", alcohol_level);
+		          if (is_first_loop) {
+		            convert_colors(red_hex, green_hex, blue_hex, &l_0, &a_0, &b_0);
+		            sprintf(l_l0, "Calibrating...\r\n");
+		            HAL_UART_Transmit(&huart2, l_l0, strlen(l_l0), 1000);
+		            i = i + 1;
+		            if (i > CALIBRATION_TIME){
+			            is_first_loop = false;
+			            alc_0 = alcohol_level;
+		            }
+		          } else {
+		        	alc_diff = convert_to_percentage_diff(alcohol_level, alc_0);
+		            convert_colors(red_hex, green_hex, blue_hex, &l, &a, &b);
+		            get_variables(l_0, a_0, b_0, l, a, b, &normalized_l, &normalized_hue, &color_change, &normalized_browning_index);
+		            sprintf(l_l0, "Normalized L*: %.2f\r\nNormalized Hue: %.2f\r\nColor Change: %.2f\r\nNormalized Browning Index: %.2f\r\n", normalized_l, normalized_hue, color_change, normalized_browning_index);
+	  	  	  		sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
+			  	  	sprintf(mq3_readings, "Alc: %.2f \%\r\n", alc_diff);
+			  	  	sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nColor Variables: %s\r\n", dht22_readings, mq3_readings, l_l0);
+			  	  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
 
-	  	  sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nTCS3200 Reading: %s\r\n Converted Color: %s\r\n", dht22_readings, mq3_readings, tcs3200_readings, l_l0);
-	  	  HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
+			  	  	int status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
+			  	  	if (status != prev_status) {
+			  	  		status_debounce = status_debounce + 1;
+			  	  	} else {
+			  	  		status_debounce = 0;
+			  	  	}
+			  	  	if (status != prev_status && status_debounce > STATUS_DEBOUNCE_TIME) {
+			  	  		prev_status = status;
+			  	  		status_debounce = 0;
+			  	  	}
+			  	  	char status_msg[100];
+			  	  	if (prev_status == 1) {
+			  	  		sprintf(status_msg, "\r\n-------------Potential Spoilage-----------\r\n");
+			  	  		HAL_UART_Transmit(&huart2, status_msg, strlen(status_msg), 1000);
+			  	  		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_3);
+			  	  	} else if (prev_status == 2) {
+			  	  		sprintf(status_msg, "\r\n-------------Spoilage-----------\r\n");
+			  	  		HAL_UART_Transmit(&huart2, status_msg, strlen(status_msg), 1000);
+			  	  		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+			  	  	} else {
+			  	  		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+			  	  	}
+		          }
 
-	  	  // Check if temperature and humidity are within range
-	  	  bool temp_check = (DHT_22.temp_C >= min_temp && DHT_22.temp_C <= max_temp);
-	  	  bool hum_check = (DHT_22.humidity >= min_hum && DHT_22.humidity <= max_hum);
-	  	  // If temperature or humidity exceeds limits, check gas and color sensors
-	  	  bool alcohol_check = (alcohol_level < ALCOHOL_THRESHOLD);
-	  	  bool color_check = (red_hex >= min_red && red_hex <= max_red &&
-							green_hex >= min_green && green_hex <= max_green &&
-							blue_hex >= min_blue && blue_hex <= max_blue);
-        bool lab_color_check = L < LAB_COLOR_THRESHOLD;
-	  	  char status[100];
-	  	  sprintf(status, "%s Condition - Temp: %s, Hum: %s, Alcohol: %s, Color: %s\r\n", FRUIT,
-	  	            temp_check ? "OK" : "FAIL",
-	  	            hum_check ? "OK" : "FAIL",
-	  	            alcohol_check ? "OK" : "FAIL",
-	  	            color_check ? "OK" : "FAIL");
 
-	  	  HAL_UART_Transmit(&huart2, (uint8_t*)status, strlen(status), 1000);
 
-	  	  // If temperature or humidity exceeds limit, check gas or color sensor and activate buzzer if needed
-	  	  if (!isBuzzerOn && ((!temp_check || !hum_check) && (!alcohol_check || !color_check))) {
-	  		  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);  // Turn on buzzer
-	  		  isBuzzerOn = true;
-	  	  } else if (isBuzzerOn && temp_check && hum_check && alcohol_check && color_check) {
-	  		  // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);    // Turn off buzzer
-	  		  isBuzzerOn = false;
-	  	  }
-//	  	  if (!isBuzzerOn && DHT_22.temp_C >= TEMP_THRESHOLD) {
-//	  	  	// Active_Buzzer_On(buzzer);
-//	  		// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-//	  	  	isBuzzerOn = true;
-//	  	  } else if (isBuzzerOn && DHT_22.temp_C < TEMP_THRESHOLD){
-//	  	  	// Active_Buzzer_Off(buzzer);
-//	  		// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-//	  	  	isBuzzerOn = false;
-//	  	  }
+	  }
+
 	  	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
@@ -564,11 +578,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_14|GPIO_PIN_4
                           |GPIO_PIN_5, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PC3 */
   GPIO_InitStruct.Pin = GPIO_PIN_3;
@@ -593,13 +607,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 // using https://web.archive.org/web/20111111080001/http://www.easyrgb.com/index.php?X=MATH&H=01#tex1
-float rgb2lab(float R, float G, float B)
+void convert_colors(float R, float G, float B, float* l, float* a, float* b)
 {
     float var_R = R/255.0;
     float var_G = G/255.0;
@@ -638,8 +656,47 @@ float rgb2lab(float R, float G, float B)
     float a_s = 500. * ( var_X - var_Y );
     float b_s = 200. * ( var_Y - var_Z );
 
-    return l_s;
+    *l = l_s;
+    *a = a_s;
+    *b = b_s;
+}
 
+void get_variables(float l_0, float a_0, float b_0, float l, float a, float b, float* normalized_l, float* normalized_hue, float* color_change, float* normalized_browning_index)
+{
+	float h_0 = sqrt(pow(a_0, 2) + pow(b_0, 2));
+	float h = sqrt(pow(a, 2) + pow(b, 2));
+	float x_0 = (a_0 + 1.75 * l_0) / (5.645 * l_0 + a_0 - 3.012 * b_0);
+	float x = (a + 1.75 * l) / (5.645 * l + a - 3.012 * b);
+	float bi_0 = (100 * (x_0 - 0.31)) / 0.17;
+	float bi = (100 * (x - 0.31)) / 0.17;
+	float delta_e = sqrt(pow((l - l_0), 2) + pow((a - a_0), 2) + pow((b - b_0), 2));
+
+	*normalized_l = l / l_0;
+	*normalized_hue = h / h_0;
+	*color_change = delta_e;
+	*normalized_browning_index = bi / bi_0;
+
+}
+
+int check_fruit_condition(float temperature, float alc_level, float alc_threshold, float humidity, float min_hum, float max_hum, float l_value, float l_threshold, float bi_value, float bi_threshold, float cc_value, float cc_threshold)
+{
+//	if (temperature > TEMP_THRESHOLD) {
+//		return 1;
+//	}
+
+//	if (alc_level > alc_threshold && (humidity < min_hum || humidity > max_hum)) {
+		if ((l_value < l_threshold) || (bi_value > bi_threshold) || (cc_value > cc_threshold)) {
+			return 2;
+//		} else {
+//			return 1;
+//		}
+	}
+
+	return 0;
+}
+float convert_to_percentage_diff(float current_value, float initial_value)
+{
+	return (100 * (current_value - initial_value)) / initial_value;
 }
 /* USER CODE END 4 */
 
