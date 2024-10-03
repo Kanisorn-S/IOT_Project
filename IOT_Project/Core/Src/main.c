@@ -25,6 +25,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "dht22.h"
 #include "active_buzzer.h"
 #include "tcs3200.h"
@@ -52,8 +53,8 @@
 #define HUM_BANANA_MAX 95
 #define ALC_BANANA 42.488
 #define L_BANANA 0.36
-#define CC_BANANA 65
-#define BI_BANANA 3.65
+#define CC_BANANA 55
+#define BI_BANANA 3.5
 
 
 // Mango
@@ -79,6 +80,7 @@
 // General Settings
 #define CALIBRATION_TIME 10
 #define STATUS_DEBOUNCE_TIME 10
+#define FLASH_ADDRESS 0x08040000
 
 // Current Fruit
 #define FRUIT "banana"
@@ -107,7 +109,7 @@ uint32_t *pCMillis = &cMillis;
 
 // MQ3
 volatile uint16_t alcohol_level;
-uint16_t alc_0;
+uint32_t alc_0;
 char mq3_readings[50];
 
 // TCS3200
@@ -142,18 +144,27 @@ void convert_colors(float R, float G, float B, float* l, float* a, float* b);
 int check_fruit_condition(float temperature, float alc_level, float alc_threshold, float humidity, float hum_min, float hum_max, float l_value, float l_threshold, float bi_value, float bi_threshold, float cc_value, float cc_threshold);
 void get_variables(float l_0, float a_0, float b_0, float l, float a, float b, float* normalized_l, float* normalized_hue, float* color_change, float* normalized_browning_index);
 float convert_to_percentage_diff(float current_value, float initial_value);
+void write_to_flash(uint32_t flash_address, uint32_t alc, float l, float cc,  float bi);
+void read_from_flash(uint32_t flash_address, uint32_t* alc_0, float* l_0, float* cc_0, float* bi_0);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-bool started = true;
+bool started = false;
+bool use_mem = false;
 //
-//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-//{
-//	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
-//		started = !started;
-//	}
-//}
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	int i = 0;
+	for (i = 0; i < 10000000; i++);
+	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
+		started = true;
+		use_mem = true;
+	} else {
+		started = true;
+		use_mem = false;
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -231,14 +242,38 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
-		  HAL_Delay(10);
-		  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
-			  while(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0);
-			  HAL_Delay(10);
-			  started = true;
-		  }
-	  }
+//	  if (started) {
+//		  HAL_FLASH_Unlock();
+//		  FLASH_Erase_Sector(6, FLASH_VOLTAGE_RANGE_3);
+//		  HAL_FLASH_Lock();
+//		  HAL_FLASH_Unlock();
+//		  uint32_t flash_address= 0x08040000;
+//		  for (int i = 0; i<=3; i++) {
+//			  HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_address, *(uint32_t *)&(test_data[i]));
+//			  flash_address+=16;
+//		  }
+//		  HAL_FLASH_Lock();
+//		  HAL_FLASH_Unlock();
+//		  flash_address= 0x08040000;
+//		  for (int i = 0; i <=3; i++) {
+//			  read_data[i] = *(float *)flash_address;
+//			  flash_address+=16;
+//		  }
+//		  HAL_FLASH_Lock();
+//		  for (int i = 0; i <=3; i++) {
+//			  sprintf(test_buff, "pi: %.4f/r/n", read_data[i]);
+//			  HAL_UART_Transmit(&huart2, test_buff, strlen(test_buff), 1000);
+//		  }
+//		  started = false;
+//	  }
+//	  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
+//		  HAL_Delay(10);
+//		  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
+//			  while(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0);
+//			  HAL_Delay(10);
+//			  started = true;
+//		  }
+//	  }
 	  if(started) {
 		  if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
 		  	  	  		DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
@@ -258,7 +293,7 @@ int main(void)
 		  	  	  HAL_ADC_PollForConversion(&hadc1, 20);
 		  	  	  alcohol_level = HAL_ADC_GetValue(&hadc1);
 
-		          if (is_first_loop) {
+		          if (is_first_loop && !use_mem) {
 		            convert_colors(red_hex, green_hex, blue_hex, &l_0, &a_0, &b_0);
 		            sprintf(l_l0, "Calibrating...\r\n");
 		            HAL_UART_Transmit(&huart2, l_l0, strlen(l_l0), 1000);
@@ -266,7 +301,14 @@ int main(void)
 		            if (i > CALIBRATION_TIME){
 			            is_first_loop = false;
 			            alc_0 = alcohol_level;
+			            write_to_flash(FLASH_ADDRESS, alc_0, l_0, a_0, b_0);
 		            }
+		          } else if (use_mem) {
+			        	sprintf(l_l0, "Loading Variables from Memory...\r\n");
+			        	HAL_UART_Transmit(&huart2, l_l0, strlen(l_l0), 1000);
+			        	read_from_flash(FLASH_ADDRESS, &alc_0, &l_0, &a_0, &b_0);
+			        	use_mem = false;
+			        	is_first_loop = false;
 		          } else {
 		        	alc_diff = convert_to_percentage_diff(alcohol_level, alc_0);
 		            convert_colors(red_hex, green_hex, blue_hex, &l, &a, &b);
@@ -580,7 +622,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
@@ -680,16 +722,16 @@ void get_variables(float l_0, float a_0, float b_0, float l, float a, float b, f
 
 int check_fruit_condition(float temperature, float alc_level, float alc_threshold, float humidity, float min_hum, float max_hum, float l_value, float l_threshold, float bi_value, float bi_threshold, float cc_value, float cc_threshold)
 {
-//	if (temperature > TEMP_THRESHOLD) {
-//		return 1;
-//	}
+	if (temperature > TEMP_THRESHOLD) {
+		return 1;
+	}
 
-//	if (alc_level > alc_threshold && (humidity < min_hum || humidity > max_hum)) {
+	if ((humidity < min_hum || humidity > max_hum)) {
 		if ((l_value < l_threshold) || (bi_value > bi_threshold) || (cc_value > cc_threshold)) {
 			return 2;
-//		} else {
-//			return 1;
-//		}
+		} else {
+			return 1;
+		}
 	}
 
 	return 0;
@@ -697,6 +739,44 @@ int check_fruit_condition(float temperature, float alc_level, float alc_threshol
 float convert_to_percentage_diff(float current_value, float initial_value)
 {
 	return (100 * (current_value - initial_value)) / initial_value;
+}
+
+void write_to_flash(uint32_t flash_address, uint32_t alc, float l, float a, float b)
+{
+	HAL_FLASH_Unlock();
+	FLASH_Erase_Sector(6, FLASH_VOLTAGE_RANGE_3);
+	HAL_FLASH_Lock();
+	HAL_FLASH_Unlock();
+	float data[4] = {alc, l, a, b};
+	for (int i = 0; i<=3; i++) {
+		if (i == 0) {
+			HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_address, data[i]);
+		} else {
+			HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_address, *(uint32_t *)&(data[i]));
+		}
+
+		flash_address+=16;
+	}
+	HAL_FLASH_Lock();
+}
+
+void read_from_flash(uint32_t flash_address, uint32_t* alc_0, float* l_0, float* a_0, float* b_0)
+{
+	HAL_FLASH_Unlock();
+	float read_data[4];
+	for (int i = 0; i <=3; i++) {
+		if (i == 0) {
+			read_data[i] = *(__IO uint32_t*)flash_address;
+		} else {
+			read_data[i] = *(float *)flash_address;
+		}
+		flash_address+=16;
+	}
+	*alc_0 = read_data[0];
+	*l_0 = read_data[1];
+	*a_0 = read_data[2];
+	*b_0 = read_data[3];
+	HAL_FLASH_Lock();
 }
 /* USER CODE END 4 */
 
