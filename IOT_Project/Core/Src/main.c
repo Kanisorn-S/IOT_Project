@@ -49,7 +49,7 @@
 
 
 // Banana
-#define HUM_BANANA_MIN 80
+#define HUM_BANANA_MIN 50
 #define HUM_BANANA_MAX 95
 #define ALC_BANANA 42.488
 #define L_BANANA 0.36
@@ -78,7 +78,7 @@
 #define BUZZER_PIN GPIO_PIN_3
 
 // General Settings
-#define CALIBRATION_TIME 10
+#define CALIBRATION_TIME 20
 #define STATUS_DEBOUNCE_TIME 10
 #define FLASH_ADDRESS 0x08040000
 
@@ -234,6 +234,7 @@ int main(void)
     	  max_bi = BI_MANGO;
    }
       int i = 0;
+      int j = 0;
       int status_debounce = 0;
       int prev_status = 0;
   /* USER CODE END 2 */
@@ -307,8 +308,12 @@ int main(void)
 			        	sprintf(l_l0, "Loading Variables from Memory...\r\n");
 			        	HAL_UART_Transmit(&huart2, l_l0, strlen(l_l0), 1000);
 			        	read_from_flash(FLASH_ADDRESS, &alc_0, &l_0, &a_0, &b_0);
-			        	use_mem = false;
-			        	is_first_loop = false;
+			        	j = j + 1;
+			        	if (j > CALIBRATION_TIME){
+			        		is_first_loop = false;
+			        		use_mem = false;
+//			        	is_first_loop = false;
+			        	}
 		          } else {
 		        	alc_diff = convert_to_percentage_diff(alcohol_level, alc_0);
 		            convert_colors(red_hex, green_hex, blue_hex, &l, &a, &b);
