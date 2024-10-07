@@ -59,13 +59,26 @@ In tcs3200.c, we override the function ``HAL_TIM_IC_CaptureCallback`` to read th
 
 ### MQ3
 
-The MQ3 communicates with a microcontroller by sending an analog signal which varies based on the alcohol concentration in the surrounding air. We connect the Analog OUT pin of the MQ3 to PA0 in order to utilize the ADC1 IN1 to read and convert the analog value.
+The MQ3 communicates with a microcontroller by sending an analog signal which varies based on the alcohol concentration in the surrounding air. We connect the Analog OUT pin of the MQ3 to PA0 to utilize the ADC1 IN1 to read and convert the analog value.
 
-#### Connection and Voltage Level
-The MQ3 operates at a 5V logic level while the STM32 gpio pins operates at 3.3V logic level; therefore, we use a voltage divider comprising of a 1Kohm and a 2Kohm (2 1Kohm in series) in order to drop the voltage range from 0-5V down to 0-3.3V, making the MQ3 compatible with the STM32.
+#### Connection and Interfacing
+The MQ3 operates at a 5V logic level while the STM32 gpio pins operates at 3.3V logic level; therefore, we use a voltage divider comprising of a 1Kohm and a 2Kohm (2 1Kohm in series) to drop the voltage range from 0-5V down to 0-3.3V, making the MQ3 compatible with the STM32.
 
 #### Reading the Analog Value
-We used ADC1 IN0 on the STM32 in order to read the analog value sent from the MQ3. We used ``HAL_ADC_PollForConversion`` and ``HAL_ADC_GetValue`` within the main program in order to retrieve the value from the MQ3
+We used ADC1 IN0 on the STM32 in order to read the analog value sent from the MQ3. We used ``HAL_ADC_PollForConversion`` and ``HAL_ADC_GetValue`` within the main program to retrieve the value from the MQ3
+
+### Buzzer
+
+We use an active buzzer as our alert system. We connect the control pin (I/O) of the active buzzer to the PC3 pin on the STM32
+
+#### Connection and Intefacing
+We connect the buzzer to a 5V power source to get a loud and clear sound; however, a normal gpio output (in push-pull mode) of the STM32 operating on 3.3V logic is insufficient to drive the buzzer. Therfore, we must set the PC3 pin GPIO mode to Output Open Drain.
+
+#### Controlling the Buzzer
+The active buzzer we use is an active low buzzer; therefore, to turn the buzzer on we must write LOW to the control pin, and to turn it off we must write HIGH to the control pin. We achieved this simply by using ``HAL_GPIO_WritePin`` along with ``HAL_GPIO_TogglePin`` to implement 2 different alert.
+
+#### Active vs Passive Buzzer
+An active buzzer has a built-in oscillator while a passive buzzer doesn't. An active buzzer can produce sound with only a DC power supply, making it easier and simpler to implement. A passive buzzer on the other hand, needs an AC signal in order to produce a sound, making it harder and more complex; however, it does have the capability of varying the pitch and tone of the sound being produced.
 
 ## Variables and Methods for Used
 - TCS3200 Color Sensor:
