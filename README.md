@@ -80,6 +80,16 @@ The active buzzer we use is an active low buzzer; therefore, to turn the buzzer 
 #### Active vs Passive Buzzer
 An active buzzer has a built-in oscillator while a passive buzzer doesn't. An active buzzer can produce sound with only a DC power supply, making it easier and simpler to implement. A passive buzzer on the other hand, needs an AC signal in order to produce a sound, making it harder and more complex; however, it does have the capability of varying the pitch and tone of the sound being produced.
 
+## User Button and External Interrupt
+
+We used the built-in button on the STM32 board to allow the user to select between normal mode and memory mode. The on-board button is connected to the PC13 pin, which we set to GPIO_EXTI13. We then override the ``HAL_GPIO_EXTI_Callback`` in the main program to handle the user pressing the button.
+
+The callback function is called when the user first press the button. As the first press is registered, we begin a delay using a for-loop 
+``int i =0;
+for (i=0; i<10000000; i++);``
+We then recheck the status of the button to see if it is being held down or not. If the button is held, we begin the program in memory mode, else we begin the program in normal mode.
+
+
 ## Variables and Methods for Used
 - TCS3200 Color Sensor:
   - (uint8_t) `red_hex` [Red Hex value from 0-255]
