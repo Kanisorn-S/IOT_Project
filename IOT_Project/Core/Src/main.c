@@ -727,17 +727,17 @@ void get_variables(float l_0, float a_0, float b_0, float l, float a, float b, f
 
 int check_fruit_condition(float temperature, float alc_level, float alc_threshold, float humidity, float min_hum, float max_hum, float l_value, float l_threshold, float bi_value, float bi_threshold, float cc_value, float cc_threshold)
 {
+	if ((l_value < l_threshold) || (bi_value > bi_threshold) || (cc_value > cc_threshold)) {
+				return 2;
+	}
 	if (temperature > TEMP_THRESHOLD) {
 		return 1;
 	}
 
 	if ((humidity < min_hum || humidity > max_hum)) {
-		if ((l_value < l_threshold) || (bi_value > bi_threshold) || (cc_value > cc_threshold)) {
-			return 2;
-		} else {
 			return 1;
-		}
 	}
+
 
 	return 0;
 }
