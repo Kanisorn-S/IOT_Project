@@ -57,6 +57,16 @@ After selecting the frequency and filter, we read the input through the connecti
 
 In tcs3200.c, we override the function ``HAL_TIM_IC_CaptureCallback`` to read the frequency of the square wave signal received then storing the frequency into a variable that can be used in the main program.
 
+### MQ3
+
+The MQ3 communicates with a microcontroller by sending an analog signal which varies based on the alcohol concentration in the surrounding air. We connect the Analog OUT pin of the MQ3 to PA0 in order to utilize the ADC1 IN1 to read and convert the analog value.
+
+#### Connection and Voltage Level
+The MQ3 operates at a 5V logic level while the STM32 gpio pins operates at 3.3V logic level; therefore, we use a voltage divider comprising of a 1Kohm and a 2Kohm (2 1Kohm in series) in order to drop the voltage range from 0-5V down to 0-3.3V, making the MQ3 compatible with the STM32.
+
+#### Reading the Analog Value
+We used ADC1 IN0 on the STM32 in order to read the analog value sent from the MQ3. We used ``HAL_ADC_PollForConversion`` and ``HAL_ADC_GetValue`` within the main program in order to retrieve the value from the MQ3
+
 ## Variables and Methods for Used
 - TCS3200 Color Sensor:
   - (uint8_t) `red_hex` [Red Hex value from 0-255]
