@@ -1,7 +1,4 @@
 import os
-import uvicorn
-
-from dotenv import load_dotenv
 
 from fastapi import FastAPI, Request, HTTPException, Header
 
@@ -19,18 +16,14 @@ from linebot.v3.messaging import (
     # Emoji,
 )
 
-from response_message import reponse_message
-
 
 app = FastAPI()
 
-load_dotenv(override=True)
-
 # LINE Access Key
-get_access_token = os.getenv('ACCESS_TOKEN')
+get_access_token = os.environ.get('ACCESS_TOKEN')
 configuration = Configuration(access_token=get_access_token)
 # LINE Secret Key
-get_channel_secret = os.getenv('CHANNEL_SECRET')
+get_channel_secret = os.environ.get('CHANNEL_SECRET')
 handler = WebhookHandler(channel_secret=get_channel_secret)
 
 @app.post("/callback")
@@ -50,15 +43,11 @@ def handle_message(event: MessageEvent):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
 
-        reply_message = reponse_message(event) # TextMessage, FlexMessage
+        reply_message = "Hello from Dev Environment"
 
         line_bot_api.reply_message(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
-                messages=[reply_message]
+                messages=[TextMessage(text=reply_message)]
             )
         )
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0")
