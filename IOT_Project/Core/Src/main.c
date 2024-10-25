@@ -51,10 +51,10 @@
 // Banana
 #define HUM_BANANA_MIN 50
 #define HUM_BANANA_MAX 95
-#define ALC_BANANA 42.488
-#define L_BANANA 0.36
-#define CC_BANANA 55
-#define BI_BANANA 3.5
+#define ALC_BANANA 90
+#define L_BANANA 0.7
+#define CC_BANANA 5
+#define BI_BANANA 2.5
 
 
 // Mango
@@ -97,6 +97,7 @@ ADC_HandleTypeDef hadc1;
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -139,6 +140,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void convert_colors(float R, float G, float B, float* l, float* a, float* b);
 int check_fruit_condition(float temperature, float alc_level, float alc_threshold, float humidity, float hum_min, float hum_max, float l_value, float l_threshold, float bi_value, float bi_threshold, float cc_value, float cc_threshold);
@@ -200,6 +202,7 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC1_Init();
   MX_TIM3_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim1);
   TCS3200_Freq_Scaling(TCS3200_OFREQ_20P);
@@ -207,6 +210,7 @@ int main(void)
   bool isBuzzerOn = false;
   bool is_first_loop = true;
   char buff[200];
+  char json_msg[200];
 
       float min_hum, max_hum, max_alc, min_l, max_cc, max_bi;
 
@@ -323,6 +327,8 @@ int main(void)
 			  	  	sprintf(mq3_readings, "Alc: %.2f \%\r\n", alc_diff);
 			  	  	sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nColor Variables: %s\r\n", dht22_readings, mq3_readings, l_l0);
 			  	  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
+			  	  	sprintf(json_msg, "{\"Red\": %d, \"Green\": %d, \"Blue\": %d, \"Temp\": %.2f, \"Hum\": %.2f, \"Alc\": %.2f}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff);
+			  	  	HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
 
 			  	  	int status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
 			  	  	if (status != prev_status) {
@@ -562,6 +568,39 @@ static void MX_TIM3_Init(void)
 
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_3);
   /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
 
 }
 
