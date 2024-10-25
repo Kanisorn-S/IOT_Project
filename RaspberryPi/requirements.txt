@@ -1,1 +1,5 @@
+keyboard==0.13.5
+numpy==2.1.2
+opencv-contrib-python==4.10.0.84
 paho-mqtt==2.1.0
+pyserial==3.5
