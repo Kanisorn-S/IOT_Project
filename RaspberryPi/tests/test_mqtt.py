@@ -9,7 +9,7 @@ PORT = 1883
 SERVER_IP = "broker.netpie.io"
 
 SUBSCRIBE_TOPIC = "@msg/llama"
-PUBLISH_TOPIC = "@shadow/data/update"
+PUBLISH_TOPIC = "@msg/sensors"
 
 CLIENT_ID = "fcbcbc65-61b8-41bd-a18b-efae842c5841"
 TOKEN = "SM7Wwmuxh8DkS39bjn9kYWaJYL7qEMoy"
