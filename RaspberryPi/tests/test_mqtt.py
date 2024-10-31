@@ -3,7 +3,10 @@ import paho.mqtt.client as mqtt
 import time
 import json
 import random
-import ssl
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 PORT = 1883
 SERVER_IP = "broker.netpie.io"
@@ -11,9 +14,9 @@ SERVER_IP = "broker.netpie.io"
 SUBSCRIBE_TOPIC = "@msg/llama"
 PUBLISH_TOPIC = "@msg/sensors"
 
-CLIENT_ID = "fcbcbc65-61b8-41bd-a18b-efae842c5841"
-TOKEN = "SM7Wwmuxh8DkS39bjn9kYWaJYL7qEMoy"
-SECRET = "yesZhxw3b9uXsSnRN9pW8FXJZ7K1e8aS"
+CLIENT_ID = os.environ.get('MQTT_CLIENT_ID')
+TOKEN = os.environ.get('MQTT_TOKEN')
+SECRET = os.environ.get('MQTT_SECRET')
 
 MqttUser_Pass = {"username": TOKEN, "password": SECRET}
 

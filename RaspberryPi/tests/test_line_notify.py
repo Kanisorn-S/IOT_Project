@@ -1,6 +1,10 @@
 import requests
 import cv2 as cv
 from time import sleep
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 cap = cv.VideoCapture(0)
 while cap.isOpened():
@@ -14,9 +18,11 @@ sleep(5)
 cap.release()
 cv.destroyAllWindows()
 
+print('LINE_NOTIFY_TOKEN' in os.environ)
+
 
 url = "https://notify-api.line.me/api/notify"
-token = "Vt9BNQWixeFboNwXUInqDOBpHvDbRrWbJtskzA0ZPYm"
+token = os.environ.get('LINE_NOTIFY_TOKEN')
 headers = {'Authorization':'Bearer '+token}
 
 msg = {

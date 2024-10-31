@@ -4,6 +4,10 @@ import paho.mqtt.client as mqtt
 from time import sleep
 import serial
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # UART setup
 uart = serial.Serial(
@@ -28,9 +32,9 @@ SUBSCRIBE_TOPIC = "@msg/llama"
 PUBLISH_TOPIC = "@shadow/data/update"
 PUBLISH_TOPIC_2 = "@msg/sensors"
 
-CLIENT_ID = "fcbcbc65-61b8-41bd-a18b-efae842c5841"
-TOKEN = "SM7Wwmuxh8DkS39bjn9kYWaJYL7qEMoy"
-SECRET = "yesZhxw3b9uXsSnRN9pW8FXJZ7K1e8aS"
+CLIENT_ID = os.environ.get('MQTT_CLIENT_ID')
+TOKEN = os.environ.get('MQTT_TOKEN')
+SECRET = os.environ.get('MQTT_SECRET')
 
 MqttUser_Pass = {"username": TOKEN, "password": SECRET}
 
@@ -52,7 +56,7 @@ client.loop_start()
 
 # Line Notify setup
 url = "https://notify-api.line.me/api/notify"
-token = "Vt9BNQWixeFboNwXUInqDOBpHvDbRrWbJtskzA0ZPYm"
+token = os.environ.get('LINE_NOTIFY_TOKEN')
 headers = {'Authorization':'Bearer ' + token}
 
 def send_line_notify(message: str, img: str = None):

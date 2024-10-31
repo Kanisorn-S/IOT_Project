@@ -1,9 +1,13 @@
 import requests
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 url = "https://api.line.me/v2/bot/message/push"
-uuid = "U7f3349a1885dc7ae6f38c1a2b5808137"
-token = "dVoaynpH9HCvrLOMNr3r5n1gLERXEkEqy4T/rZaVCA6phXSo5jgoEsYCGJZ/ZoYdU/HW0BhJG8i05pZwHJUmGHMIlMCZEux7vCra8wU5/1puLJSDSte6ilAF3XYTU9QqeOg3zU79sAkBSiZIQLIIRgdB04t89/1O/w1cDnyilFU="
+uuid = os.environ.get('LINE_OA_UUID') 
+token = os.environ.get('LINE_OA_TOKEN')
 headers = {
   'content-type': 'application/json',
   'Authorization': 'Bearer ' + token
