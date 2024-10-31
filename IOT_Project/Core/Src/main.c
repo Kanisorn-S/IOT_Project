@@ -247,38 +247,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  if (started) {
-//		  HAL_FLASH_Unlock();
-//		  FLASH_Erase_Sector(6, FLASH_VOLTAGE_RANGE_3);
-//		  HAL_FLASH_Lock();
-//		  HAL_FLASH_Unlock();
-//		  uint32_t flash_address= 0x08040000;
-//		  for (int i = 0; i<=3; i++) {
-//			  HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_address, *(uint32_t *)&(test_data[i]));
-//			  flash_address+=16;
-//		  }
-//		  HAL_FLASH_Lock();
-//		  HAL_FLASH_Unlock();
-//		  flash_address= 0x08040000;
-//		  for (int i = 0; i <=3; i++) {
-//			  read_data[i] = *(float *)flash_address;
-//			  flash_address+=16;
-//		  }
-//		  HAL_FLASH_Lock();
-//		  for (int i = 0; i <=3; i++) {
-//			  sprintf(test_buff, "pi: %.4f/r/n", read_data[i]);
-//			  HAL_UART_Transmit(&huart2, test_buff, strlen(test_buff), 1000);
-//		  }
-//		  started = false;
-//	  }
-//	  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
-//		  HAL_Delay(10);
-//		  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0){
-//			  while(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0);
-//			  HAL_Delay(10);
-//			  started = true;
-//		  }
-//	  }
+
+    char t[8];
+    if (HAL_UART_Receive(&huart1, t, 1, 1000) == HAL_OK) {
+      if (!started && t[0] == '1') {
+        started = true;
+        use_mem = false;
+      } else if (started && t[0] == '0') {
+        started = false;
+      } else if (!started && t[0] == '2') {
+        started = true;
+        use_mem = true;
+      }
+    }
+
 	  if(started) {
 		  if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
 		  	  	  		DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
