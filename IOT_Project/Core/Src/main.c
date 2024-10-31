@@ -327,8 +327,6 @@ int main(void)
 			  	  	sprintf(mq3_readings, "Alc: %.2f \%\r\n", alc_diff);
 			  	  	sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nColor Variables: %s\r\n", dht22_readings, mq3_readings, l_l0);
 			  	  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
-			  	  	sprintf(json_msg, "{\"Red\": %d, \"Green\": %d, \"Blue\": %d, \"Temp\": %.2f, \"Hum\": %.2f, \"Alc\": %.2f}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff);
-			  	  	HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
 
 			  	  	int status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
 			  	  	if (status != prev_status) {
@@ -354,6 +352,8 @@ int main(void)
 			  	  	}
 		          }
 
+			  	  	sprintf(json_msg, "{\"Red\": %d, \"Green\": %d, \"Blue\": %d, \"Temp\": %.2f, \"Hum\": %.2f, \"Alc\": %.2f, \"Status\": %d}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff, prev_status);
+			  	  	HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
 
 
 	  }

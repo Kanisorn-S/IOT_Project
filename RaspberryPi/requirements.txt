@@ -1,5 +1,10 @@
+certifi==2024.8.30
+charset-normalizer==3.4.0
+idna==3.10
 keyboard==0.13.5
 numpy==2.1.2
 opencv-contrib-python==4.10.0.84
 paho-mqtt==2.1.0
 pyserial==3.5
+requests==2.32.3
+urllib3==2.2.3
