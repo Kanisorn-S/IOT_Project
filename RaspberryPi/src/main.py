@@ -1,9 +1,11 @@
 import cv2 as cv
 import paho.mqtt.publish as publish
 import paho.mqtt.client as mqtt
-import time
+from time import sleep
 import serial
+import requests
 
+# UART setup
 uart = serial.Serial(
         port='/dev/serial0',
         baudrate=115200,
@@ -18,6 +20,7 @@ if uart.isOpen():
 else:
     print("Failed to open UART connection.")
 
+# MQTT setup
 PORT = 1883
 SERVER_IP = "broker.netpie.io"
 
@@ -47,6 +50,26 @@ client.username_pw_set(TOKEN, SECRET)
 client.connect(SERVER_IP, PORT)
 client.loop_start()
 
+# Line Notify setup
+url = "https://notify-api.line.me/api/notify"
+token = "Vt9BNQWixeFboNwXUInqDOBpHvDbRrWbJtskzA0ZPYm"
+headers = {'Authorization':'Bearer ' + token}
+
+def send_line_notify(message: str, img: str = None):
+    if img:
+        msg = {
+            "message": (None, message),
+            "imageFile": open(img)
+        }
+        res = requests.post(url, headers=headers, files=msg)
+        print(res.text)
+    else:
+        msg = {
+            "message": message
+        }
+        res = requests.posst(url, headers, data=msg)
+        print(res.text)
+        
 cap = cv.VideoCapture(0)
 try: 
   while True:
@@ -60,7 +83,7 @@ try:
       client.publish(PUBLISH_TOPIC, data_out, retain=True)
       client.publish(PUBLISH_TOPIC_2, data_out, retain=True)
       print("Publish...")
-      time.sleep(2)
+      sleep(2)
 
 except KeyboardInterrupt:
   print("Program Terminated")
