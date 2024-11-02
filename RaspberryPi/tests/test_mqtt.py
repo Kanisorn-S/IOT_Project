@@ -40,12 +40,13 @@ while True:
     # Get Data from STM32 via USART
     # Dummy Data
     data = {
-        "Temp": random.randrange(0, 100),
-        "Humi": random.randrange(0, 100),
-        "R": random.randrange(0, 255),
-        "G": random.randrange(0, 255),
-        "B": random.randrange(0, 255),
-        "Gas Value": random.randrange(0, 100),
+        "temp": random.randrange(0, 100),
+        "hum": random.randrange(0, 100),
+        "red": random.randrange(0, 255),
+        "green": random.randrange(0, 255),
+        "blue": random.randrange(0, 255),
+        "alc": random.randrange(0, 100),
+        "status": "Fresh",
     }
     data_out = json.dumps({"data": data})
     client.publish(PUBLISH_TOPIC, data_out, retain=True)
