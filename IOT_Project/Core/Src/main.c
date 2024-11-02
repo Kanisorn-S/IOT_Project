@@ -334,7 +334,7 @@ int main(void)
 			  	  	}
 		          }
 
-			  	  	sprintf(json_msg, "{\"Red\": %d, \"Green\": %d, \"Blue\": %d, \"Temp\": %.2f, \"Hum\": %.2f, \"Alc\": %.2f, \"Status\": %d}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff, prev_status);
+			  	  	sprintf(json_msg, "{\"red\": %d, \"green\": %d, \"blue\": %d, \"temp\": %.2f, \"hum\": %.2f, \"alc\": %.2f, \"status\": %d}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff, prev_status);
 			  	  	HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
 
 
