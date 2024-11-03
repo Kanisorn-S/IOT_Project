@@ -1,5 +1,6 @@
 #Virtual Environment
 venv/
+venv2/
 .env
 
 #settings
@@ -54,3 +55,6 @@ release
 *.su
 *.idb
 *.pdb
+
+# Data files
+data/
