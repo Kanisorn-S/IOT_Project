@@ -5,6 +5,8 @@ from time import sleep
 import serial
 import requests
 import os
+import requests
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,7 +30,7 @@ else:
 PORT = 1883
 SERVER_IP = "broker.netpie.io"
 
-SUBSCRIBE_TOPIC = "@msg/llama"
+SUBSCRIBE_TOPIC = "@msg/pic"
 PUBLISH_TOPIC = "@shadow/data/update"
 PUBLISH_TOPIC_2 = "@msg/sensors"
 
@@ -44,6 +46,43 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.payload))
+    cap = cv.VideoCapture(0)
+    ret, frame = cap.read()
+    cv.imshow("Pic", frame)
+    cv.imwrite("./images/test_img.jpg", frame)
+    cv.waitKey(1)
+    cap.release()
+    cv.destroyAllWindows()
+    image_url = upload_image_to_imgbb("./images/test_img.jpg", IMGBB_API_KEY)
+    url = "https://api.line.me/v2/bot/message/push"
+    uuid = os.environ.get('LINE_OA_UUID') 
+    token = os.environ.get('LINE_OA_TOKEN')
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
+
+    current_img = {
+        "type": "image",
+        "originalContentUrl": image_url,
+        "previewImageUrl": image_url,
+    }
+
+    msg = {
+        "type": "text",
+        "text": "Here's the current picture!"
+    }
+
+    data = {
+        "to": uuid,
+        "messages": [
+            msg,
+            current_img
+        ]
+    }
+
+    res = requests.post(url, headers=headers, data=json.dumps(data))
+    print(res.text)
     
 client = mqtt.Client(protocol=mqtt.MQTTv311, client_id=CLIENT_ID, clean_session=True)
 client.on_connect = on_connect
@@ -54,46 +93,74 @@ client.username_pw_set(TOKEN, SECRET)
 client.connect(SERVER_IP, PORT)
 client.loop_start()
 
-# Line Notify setup
-url = "https://notify-api.line.me/api/notify"
-token = os.environ.get('LINE_NOTIFY_TOKEN')
-headers = {'Authorization':'Bearer ' + token}
+# IMGBB Setup
+IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY")
 
-def send_line_notify(message: str, img: str = None):
-    if img:
-        msg = {
-            "message": (None, message),
-            "imageFile": open(img)
+def upload_image_to_imgbb(image_path, api_key):
+    # Open the image file in binary mode
+    with open(image_path, "rb") as image_file:
+        # Prepare the image data to upload
+        files = {
+            'image': image_file.read()
         }
-        res = requests.post(url, headers=headers, files=msg)
-        print(res.text)
-    else:
-        msg = {
-            "message": message
-        }
-        res = requests.posst(url, headers, data=msg)
-        print(res.text)
         
-cap = cv.VideoCapture(0)
+        # API endpoint to upload the image
+        url = "https://api.imgbb.com/1/upload"
+        
+        # Payload with API key and expiration time (optional)
+        payload = {
+            'key': api_key,
+            'expiration': 600  # Expiration time in seconds (optional)
+        }
+        
+        # Send POST request to upload the image
+        response = requests.post(url, files=files, data=payload)
+        
+        # Check if the upload was successful
+        if response.status_code == 200:
+            # Extract the image URL from the response
+            image_url = response.json()['data']['url']
+            print("Image URL:", image_url)
+            return image_url
+        else:
+            print("Error:", response.status_code, response.text)
+            return None
+
+started = False
+
 try: 
   while True:
-      # Get Data from STM32 via USART
-      data_out = uart.readline()
 
-      # Image Recognition
-      ret, frame = cap.read()
-      cv.imshow("Webcam", frame)    
-      # Publish to NETPIE
-      client.publish(PUBLISH_TOPIC, data_out, retain=True)
-      client.publish(PUBLISH_TOPIC_2, data_out, retain=True)
-      print("Publish...")
-      sleep(2)
+    if started:
+        # Get Data from STM32 via USART
+        data_out = uart.readline()
+
+        # Publish to NETPIE
+        client.publish(PUBLISH_TOPIC, data_out, retain=True)
+        client.publish(PUBLISH_TOPIC_2, data_out, retain=True)
+        print("Publish...")
+        sleep(2)
+
+    # Wait for IR sensor to detect fruit
+    elif not started and True:
+        # Classify fruit, then send fruit name to STM32 via UART
+        cap = cv.VideoCapture(0)
+        ret, frame = cap.read()
+        cv.imshow("Webcam", frame)    
+        fruit = "Banana"
+        # Image classification
+        uart.write(fruit.encode('utf-8'))
+        cap.release()
+        cv.destroyAllWindows()
+        started = True
+
+    else:
+       pass
 
 except KeyboardInterrupt:
   print("Program Terminated")
 
 finally:
   uart.close()
-  cap.release()
   cv.destroyAllWindows()
   print("Clean up...")
