@@ -71,9 +71,9 @@ if __name__ == "__main__":
     SUBSCRIBE_TOPIC = "@msg/sensors"
     PUBLISH_TOPIC = "@msg/dht"
 
-    CLIENT_ID = "acff940e-e89c-4939-b55f-26e079cf05ce"
-    TOKEN = "WPqKsCuDf4syDQHR7LP4EgaxQ46X27ZG"
-    SECRET = "3hMYNLXHTH2gXPQJ43vqGuhmGJGgvV6J"
+    CLIENT_ID = os.environ.get('CLIENT_ID')
+    TOKEN = os.environ.get('TOKEN')
+    SECRET = os.environ.get('SECRET')
 
     MqttUser_Pass = {"username": TOKEN, "password": SECRET}
 

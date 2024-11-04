@@ -13,9 +13,9 @@ from gmqtt.mqtt.constants import MQTTv311
 from response_message import response_message
 
 # NETPIE
-CLIENT_ID = "acff940e-e89c-4939-b55f-26e079cf05ce"
-TOKEN = "WPqKsCuDf4syDQHR7LP4EgaxQ46X27ZG"
-SECRET = "3hMYNLXHTH2gXPQJ43vqGuhmGJGgvV6J"
+CLIENT_ID = os.environ.get('CLIENT_ID')
+TOKEN = os.environ.get('TOKEN')
+SECRET = os.environ.get('SECRET')
 
 mqtt_config = MQTTConfig(
   host="broker.netpie.io",
