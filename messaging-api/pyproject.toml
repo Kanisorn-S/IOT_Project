@@ -11,6 +11,8 @@ python = "^3.11"
 fastapi = "^0.115.3"
 line-bot-sdk = "^3.13.0"
 uvicorn = "^0.32.0"
+paho-mqtt = "^2.1.0"
+fastapi-mqtt = "^2.2.0"
 
 
 [build-system]

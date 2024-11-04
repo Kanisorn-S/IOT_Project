@@ -5,20 +5,6 @@ import json
 from contextlib import asynccontextmanager
 from typing import Any
 
-from linebot.v3 import WebhookHandler
-from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
-
-from linebot.v3.messaging import (
-    ApiClient, 
-    MessagingApi, 
-    Configuration, 
-    ReplyMessageRequest, 
-    TextMessage, 
-    # FlexMessage, 
-    # Emoji,
-)
-
 from fastapi import FastAPI, Request, HTTPException, Header
 from fastapi_mqtt.config import MQTTConfig
 from fastapi_mqtt.fastmqtt import FastMQTT
@@ -26,17 +12,10 @@ from gmqtt.mqtt.constants import MQTTv311
 
 from response_message import response_message
 
-# LINE Access Key
-get_access_token = os.environ.get('ACCESS_TOKEN')
-configuration = Configuration(access_token=get_access_token)
-# LINE Secret Key
-get_channel_secret = os.environ.get('CHANNEL_SECRET')
-handler = WebhookHandler(channel_secret=get_channel_secret)
-
 # NETPIE
-CLIENT_ID = os.environ.get('CLIENT_ID')
-TOKEN = os.environ.get('TOKEN')
-SECRET = os.environ.get('SECRET')
+CLIENT_ID = "acff940e-e89c-4939-b55f-26e079cf05ce"
+TOKEN = "WPqKsCuDf4syDQHR7LP4EgaxQ46X27ZG"
+SECRET = "3hMYNLXHTH2gXPQJ43vqGuhmGJGgvV6J"
 
 mqtt_config = MQTTConfig(
   host="broker.netpie.io",
@@ -71,7 +50,8 @@ async def message(client, topic, payload, qos, properties):
   print("Received message: ", topic, payload.decode(), qos, properties)
   global mqtt_msg
   mqtt_msg = payload.decode()
-  print(json.loads(mqtt_msg))
+  data = json.loads(mqtt_msg)
+  print(data["data"]["Temp"])
   return 0
 
 @fast_mqtt.subscribe("@msg/sensors")
@@ -94,33 +74,6 @@ async def func():
 
     global mqtt_msg
     return {"result": True,"message":mqtt_msg }
-
-@app.post("/callback")
-async def callback(request: Request, x_line_signature: str = Header(None)):
-    body = await request.body()
-    body_str = body.decode('utf-8')
-    try:
-        handler.handle(body_str, x_line_signature)
-    except InvalidSignatureError:
-        print("Invalid signature. Please check your channel access token/channel secret.")
-        raise HTTPException(status_code=400, detail="Invalid signature.")
-
-    return 'OK'
-
-@handler.add(MessageEvent, message=TextMessageContent)
-def handle_message(event: MessageEvent):
-    with ApiClient(configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-
-        global mqtt_msg
-        reply_message = response_message(event, mqtt_msg)
-
-        line_bot_api.reply_message(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[reply_message]
-            )
-        )
 
 
 if __name__ == "__main__":
