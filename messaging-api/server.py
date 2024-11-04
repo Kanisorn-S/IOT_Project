@@ -114,13 +114,16 @@ def handle_message(event: MessageEvent):
 
         global mqtt_msg
         reply_message = response_message(event, mqtt_msg)
-
-        line_bot_api.reply_message(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[reply_message]
+        if reply_message == 1:
+            global fast_mqtt
+            fast_mqtt.publish('@msg/pic', '1')
+        else: 
+            line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[reply_message]
+                )
             )
-        )
 
 
 if __name__ == "__main__":
