@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 import cv2 as cv
 import requests
-from utils.img_bb import upload_image_to_imgbb
+from img_bb import upload_image_to_imgbb
 
 load_dotenv()
 
@@ -35,11 +35,11 @@ def on_message(client, userdata, msg):
     cap = cv.VideoCapture(0)
     ret, frame = cap.read()
     cv.imshow("Pic", frame)
-    cv.imwrite("./images/test_img.jpg", frame)
+    cv.imwrite("./live_images/test_img.jpg", frame)
     cv.waitKey(1)
     cap.release()
     cv.destroyAllWindows()
-    image_url = upload_image_to_imgbb("./images/test_img.jpg", IMGBB_API_KEY)
+    image_url = upload_image_to_imgbb("./live_images/test_img.jpg", IMGBB_API_KEY)
     url = "https://api.line.me/v2/bot/message/push"
     uuid = os.environ.get('LINE_OA_UUID') 
     token = os.environ.get('LINE_OA_TOKEN')

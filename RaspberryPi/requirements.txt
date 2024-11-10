@@ -53,7 +53,6 @@ mdurl==0.1.2
 ml-dtypes==0.4.1
 msgpack==1.1.0
 my-utils==0.1
--e git+https://github.com/Kanisorn-S/IOT_Project.git@d8989035c7e0ce9cd084fe6094d3708d597b1993#egg=mymodule&subdirectory=raspberrypi\utils
 namex==0.0.8
 nest-asyncio==1.6.0
 numpy==2.0.2
@@ -105,7 +104,6 @@ typing_extensions==4.12.2
 tzdata==2024.2
 uritemplate==4.1.1
 urllib3==2.2.3
--e git+https://github.com/Kanisorn-S/IOT_Project.git@d8989035c7e0ce9cd084fe6094d3708d597b1993#egg=utils&subdirectory=raspberrypi\utils
 wcwidth==0.2.13
 Werkzeug==3.1.1
 wrapt==1.16.0
