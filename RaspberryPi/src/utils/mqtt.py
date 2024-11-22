@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import cv2 as cv
 import requests
 from img_bb import upload_image_to_imgbb
-from picamzero import Camera
+# from picamzero import Camera
 import serial
 import RPi.GPIO as GPIO
 import time
@@ -45,11 +45,12 @@ def on_message(client, userdata, msg):
     #cap = cv.VideoCapture(0)
     #ret, frame = cap.read()
     #cv.imshow("Pic", frame)
-    cam = Camera()
-    cam.resolution = (1920, 1080)
-    cam.start_preview()
-    cam.take_photo("./live_images/test_img.jpg")
-    cam.stop_preview()
+    # cam = Camera()
+    # cam.resolution = (1920, 1080)
+    # cam.start_preview()
+    # cam.take_photo("./live_images/test_img.jpg")
+    # cam.stop_preview()
+    os.system("libcamera-still -o ./live_images/test_img.jpg --vflip --hflip")
     #cv.imwrite("./live_images/test_img.jpg", frame)
     #cv.waitKey(1)
     #cap.release()
