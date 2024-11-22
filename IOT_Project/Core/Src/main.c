@@ -81,6 +81,7 @@
 #define CALIBRATION_TIME 20
 #define STATUS_DEBOUNCE_TIME 10
 #define FLASH_ADDRESS 0x08040000
+#define FRUIT_ADDRESS 0x08060000
 
 // Current Fruit
 #define FRUIT "banana"
@@ -148,10 +149,13 @@ void get_variables(float l_0, float a_0, float b_0, float l, float a, float b, f
 float convert_to_percentage_diff(float current_value, float initial_value);
 void write_to_flash(uint32_t flash_address, uint32_t alc, float l, float cc,  float bi);
 void read_from_flash(uint32_t flash_address, uint32_t* alc_0, float* l_0, float* cc_0, float* bi_0);
+void write_fruit_to_flash(uint32_t flash_address, char fruit);
+void read_fruit_from_flash(uint32_t flash_address, char* fruit);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+bool stm_started = false;
 bool started = false;
 bool use_mem = false;
 //
@@ -160,10 +164,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	int i = 0;
 	for (i = 0; i < 10000000; i++);
 	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
-		started = true;
+		stm_started = true;
 		use_mem = true;
 	} else {
-		started = true;
+		stm_started = true;
 		use_mem = false;
 	}
 }
@@ -212,135 +216,156 @@ int main(void)
   char buff[200];
   char json_msg[200];
 
-      float min_hum, max_hum, max_alc, min_l, max_cc, max_bi;
+  float min_hum, max_hum, max_alc, min_l, max_cc, max_bi;
 
-      // Set thresholds based on the fruit
-      if (strcmp(FRUIT, "apple") == 0) {
-          min_hum = HUM_APPLE_MIN;
-          max_hum = HUM_APPLE_MAX;
-          max_alc = ALC_APPLE;
-          min_l = L_APPLE;
-          max_cc = CC_APPLE;
-          max_bi = BI_APPLE;
-      } else if (strcmp(FRUIT, "banana") == 0) {
-    	  min_hum = HUM_BANANA_MIN;
-    	  max_hum = HUM_BANANA_MAX;
-    	  max_alc = ALC_BANANA;
-    	  min_l = L_BANANA;
-    	  max_cc = CC_BANANA;
-    	  max_bi = BI_BANANA;
-      } else if (strcmp(FRUIT, "mango") == 0) {
-    	  min_hum = HUM_MANGO_MIN;
-    	  max_hum = HUM_MANGO_MAX;
-    	  max_alc = ALC_MANGO;
-    	  min_l = L_MANGO;
-    	  max_cc = CC_MANGO;
-    	  max_bi = BI_MANGO;
-   }
-      int i = 0;
-      int j = 0;
-      int status_debounce = 0;
-      int prev_status = 0;
+  int i = 0;
+  int j = 0;
+  int status_debounce = 0;
+  int prev_status = 0;
+  char fruit;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // STM started
+	  if(stm_started) {
+      // Raspberry Pi started
+      if (started) {
+        // Main Program
+        // Set thresholds based on the fruit
+        if (fruit == '0') {
+          min_hum = HUM_APPLE_MIN;
+          max_hum = HUM_APPLE_MAX;
+          max_alc = ALC_APPLE;
+          min_l = L_APPLE;
+          max_cc = CC_APPLE;
+          max_bi = BI_APPLE;
+        } else if (fruit == '1') {
+    	    min_hum = HUM_BANANA_MIN;
+    	    max_hum = HUM_BANANA_MAX;
+    	    max_alc = ALC_BANANA;
+    	    min_l = L_BANANA;
+    	    max_cc = CC_BANANA;
+    	    max_bi = BI_BANANA;
+        } else if (fruit == '2') {
+    	    min_hum = HUM_MANGO_MIN;
+    	    max_hum = HUM_MANGO_MAX;
+    	    max_alc = ALC_MANGO;
+    	    min_l = L_MANGO;
+    	    max_cc = CC_MANGO;
+    	    max_bi = BI_MANGO;
+        }
 
-    char t[8];
-    if (HAL_UART_Receive(&huart1, t, 1, 1000) == HAL_OK) {
-      if (!started && t[0] == '1') {
-        started = true;
-        use_mem = false;
-      } else if (started && t[0] == '0') {
-        started = false;
-      } else if (!started && t[0] == '2') {
-        started = true;
-        use_mem = true;
+        // Read Temperature and Humidity from DHT22
+		    if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
+		  	  DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
+		  	}
+
+        // Read Color from TCS3200
+		  	uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
+		  	uint32_t green_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_GREEN);
+		  	uint32_t blue_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_BLUE);
+
+		  	uint8_t red_hex = MapFrequencyToHex(red_frequency, MIN_RED, MAX_RED);
+		  	uint8_t green_hex = MapFrequencyToHex(green_frequency, MIN_GREEN, MAX_GREEN);
+		  	uint8_t blue_hex = MapFrequencyToHex(blue_frequency, MIN_BLUE, MAX_BLUE);
+
+		  	sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_hex, green_hex, blue_hex);
+
+        // Read Alcohol Level from MQ3
+		  	HAL_ADC_Start(&hadc1);
+		  	HAL_ADC_PollForConversion(&hadc1, 20);
+		  	alcohol_level = HAL_ADC_GetValue(&hadc1);
+
+        // Check for use memory mode
+        // First time initialization
+		    if (is_first_loop && !use_mem) {
+		      convert_colors(red_hex, green_hex, blue_hex, &l_0, &a_0, &b_0);
+		      sprintf(l_l0, "Calibrating...\r\n");
+		      HAL_UART_Transmit(&huart2, l_l0, strlen(l_l0), 1000);
+		      i = i + 1;
+		      if (i > CALIBRATION_TIME){
+			      is_first_loop = false;
+			      alc_0 = alcohol_level;
+			      write_to_flash(FLASH_ADDRESS, alc_0, l_0, a_0, b_0);
+		      }
+		    } else if (use_mem) { // Use memory mode
+			    sprintf(l_l0, "Loading Variables from Memory...\r\n");
+			    HAL_UART_Transmit(&huart2, l_l0, strlen(l_l0), 1000);
+			    read_from_flash(FLASH_ADDRESS, &alc_0, &l_0, &a_0, &b_0);
+			    j = j + 1;
+			    if (j > CALIBRATION_TIME){
+			      is_first_loop = false;
+			      use_mem = false;
+			    }
+		    } else { // Done Initialization
+		      float alc_diff = convert_to_percentage_diff(alcohol_level, alc_0);
+		      convert_colors(red_hex, green_hex, blue_hex, &l, &a, &b);
+		      get_variables(l_0, a_0, b_0, l, a, b, &normalized_l, &normalized_hue, &color_change, &normalized_browning_index);
+		      sprintf(l_l0, "Normalized L*: %.2f\r\nNormalized Hue: %.2f\r\nColor Change: %.2f\r\nNormalized Browning Index: %.2f\r\n", normalized_l, normalized_hue, color_change, normalized_browning_index);
+	  	  	sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
+			  	sprintf(mq3_readings, "Alc: %.2f \%\r\n", alc_diff);
+			  	sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nColor Variables: %s\r\n", dht22_readings, mq3_readings, l_l0);
+			  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
+
+			  	int status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
+			  	if (status != prev_status) {
+			  	  status_debounce = status_debounce + 1;
+			  	} else {
+			  	  status_debounce = 0;
+			  	}
+			  	if (status != prev_status && status_debounce > STATUS_DEBOUNCE_TIME) {
+			  	  prev_status = status;
+			  	  status_debounce = 0;
+			  	}
+			  	char status_msg[100];
+			  	  if (prev_status == 1) {
+			  	  	sprintf(status_msg, "\r\n-------------Potential Spoilage-----------\r\n");
+			  	  	HAL_UART_Transmit(&huart2, status_msg, strlen(status_msg), 1000);
+			  	  	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_3);
+			  	  } else if (prev_status == 2) {
+			  	  	sprintf(status_msg, "\r\n-------------Spoilage-----------\r\n");
+			  	  	HAL_UART_Transmit(&huart2, status_msg, strlen(status_msg), 1000);
+			  	  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+			  	  } else {
+			  	  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+			  	  }
+
+			  	  sprintf(json_msg, "{\"red\": %d, \"green\": %d, \"blue\": %d, \"temp\": %.2f, \"hum\": %.2f, \"alc\": %.2f, \"status\": %d}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff, prev_status);
+			  	  HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
+      } else {
+        HAL_UART_Transmit(&huart2, "Waiting for Raspberry Pi to start...\r\n", 1000);
+        // Check for Raspberry Pi Start
+        char t[8];
+        if (HAL_UART_Receive(&huart1, t, 1, 1000) == HAL_OK) {
+          // Fruit Detected 
+          if (!started && t[0] == '1') {
+            bool know_fruit = false;
+            if (use_mem) {
+              know_fruit = true;
+            }
+            // Wait for Raspberry Pi to send fruit
+            while (!know_fruit) {
+              if (HAL_UART_Receive(&huart1, t, 1, 1000) == HAL_OK) {
+                if (t[0] == 'f') {
+                  fruit = t[1];
+                  know_fruit = true;
+                  write_fruit_to_flash(FRUIT_ADDRESS, fruit);
+                }
+              }
+            }
+            read_fruit_from_flash(FRUIT_ADDRESS, &fruit);
+            started = true;
+          }
+        }
       }
-    }
-
-	  if(started) {
-		  if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
-		  	  	  		DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
-		  	  	  }
-
-		  	  	  uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
-		  	  	  uint32_t green_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_GREEN);
-		  	  	  uint32_t blue_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_BLUE);
-
-		  	      uint8_t red_hex = MapFrequencyToHex(red_frequency, MIN_RED, MAX_RED);
-		  	      uint8_t green_hex = MapFrequencyToHex(green_frequency, MIN_GREEN, MAX_GREEN);
-		  	      uint8_t blue_hex = MapFrequencyToHex(blue_frequency, MIN_BLUE, MAX_BLUE);
-
-		  	  	  sprintf(tcs3200_readings, "Red: %d Green: %d Blue: %d\r\n", red_hex, green_hex, blue_hex);
-
-		  	  	  HAL_ADC_Start(&hadc1);
-		  	  	  HAL_ADC_PollForConversion(&hadc1, 20);
-		  	  	  alcohol_level = HAL_ADC_GetValue(&hadc1);
-
-		          if (is_first_loop && !use_mem) {
-		            convert_colors(red_hex, green_hex, blue_hex, &l_0, &a_0, &b_0);
-		            sprintf(l_l0, "Calibrating...\r\n");
-		            HAL_UART_Transmit(&huart2, l_l0, strlen(l_l0), 1000);
-		            i = i + 1;
-		            if (i > CALIBRATION_TIME){
-			            is_first_loop = false;
-			            alc_0 = alcohol_level;
-			            write_to_flash(FLASH_ADDRESS, alc_0, l_0, a_0, b_0);
-		            }
-		          } else if (use_mem) {
-			        	sprintf(l_l0, "Loading Variables from Memory...\r\n");
-			        	HAL_UART_Transmit(&huart2, l_l0, strlen(l_l0), 1000);
-			        	read_from_flash(FLASH_ADDRESS, &alc_0, &l_0, &a_0, &b_0);
-			        	j = j + 1;
-			        	if (j > CALIBRATION_TIME){
-			        		is_first_loop = false;
-			        		use_mem = false;
-//			        	is_first_loop = false;
-			        	}
-		          } else {
-		        	alc_diff = convert_to_percentage_diff(alcohol_level, alc_0);
-		            convert_colors(red_hex, green_hex, blue_hex, &l, &a, &b);
-		            get_variables(l_0, a_0, b_0, l, a, b, &normalized_l, &normalized_hue, &color_change, &normalized_browning_index);
-		            sprintf(l_l0, "Normalized L*: %.2f\r\nNormalized Hue: %.2f\r\nColor Change: %.2f\r\nNormalized Browning Index: %.2f\r\n", normalized_l, normalized_hue, color_change, normalized_browning_index);
-	  	  	  		sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
-			  	  	sprintf(mq3_readings, "Alc: %.2f \%\r\n", alc_diff);
-			  	  	sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nColor Variables: %s\r\n", dht22_readings, mq3_readings, l_l0);
-			  	  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
-
-			  	  	int status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
-			  	  	if (status != prev_status) {
-			  	  		status_debounce = status_debounce + 1;
-			  	  	} else {
-			  	  		status_debounce = 0;
-			  	  	}
-			  	  	if (status != prev_status && status_debounce > STATUS_DEBOUNCE_TIME) {
-			  	  		prev_status = status;
-			  	  		status_debounce = 0;
-			  	  	}
-			  	  	char status_msg[100];
-			  	  	if (prev_status == 1) {
-			  	  		sprintf(status_msg, "\r\n-------------Potential Spoilage-----------\r\n");
-			  	  		HAL_UART_Transmit(&huart2, status_msg, strlen(status_msg), 1000);
-			  	  		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_3);
-			  	  	} else if (prev_status == 2) {
-			  	  		sprintf(status_msg, "\r\n-------------Spoilage-----------\r\n");
-			  	  		HAL_UART_Transmit(&huart2, status_msg, strlen(status_msg), 1000);
-			  	  		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-			  	  	} else {
-			  	  		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-			  	  	}
-		          }
-
-			  	  	sprintf(json_msg, "{\"red\": %d, \"green\": %d, \"blue\": %d, \"temp\": %.2f, \"hum\": %.2f, \"alc\": %.2f, \"status\": %d}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff, prev_status);
-			  	  	HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
 
 
 	  }
 
-	  	  HAL_Delay(1000);
+	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -765,6 +790,23 @@ int check_fruit_condition(float temperature, float alc_level, float alc_threshol
 float convert_to_percentage_diff(float current_value, float initial_value)
 {
 	return (100 * (current_value - initial_value)) / initial_value;
+}
+
+void write_fruit_to_flash(uint32_t flash_address, char fruit)
+{
+  HAL_FLASH_Unlock();
+  FLASH_Erase_Sector(7, FLASH_VOLTAGE_RANGE_3);
+  HAL_FLASH_Lock();
+  HAL_FLASH_Unlock();
+  HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_address, fruit);
+  HAL_FLASH_Lock();
+}
+
+void read_fruit_from_flash(uint32_t flash_address, char* fruit)
+{
+  HAL_FLASH_Unlock();
+  *fruit = *(__IO uint32_t*)flash_address;
+  HAL_FLASH_Lock();
 }
 
 void write_to_flash(uint32_t flash_address, uint32_t alc, float l, float a, float b)
