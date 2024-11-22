@@ -6,7 +6,6 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 import tensorflow as tf
 
-model = tf.keras.models.load_model('./model/MyModel.keras')
 
 def predict_from_cap(model, cap, path):
   ret, frame = cap.read()
@@ -20,7 +19,7 @@ def predict_from_path(model, path):
 
 
 if __name__ == "__main__":
-  
+  model = tf.keras.models.load_model('./model/MyModel.keras')
   cap = cv.VideoCapture(0)
 
   ret, frame = cap.read()

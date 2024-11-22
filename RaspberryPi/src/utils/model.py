@@ -6,8 +6,6 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 import tensorflow as tf
 
-# Load the saved model
-model = tf.keras.models.load_model('./model/MyModel.keras')
 
 # Load and preprocess your image (example with an arbitrary image path)
 def preprocess_image(image_path):
@@ -22,40 +20,7 @@ def predict_fruits(model, image_path):
   fruits_vegs = [
     "Banana",
     "Apple",
-    "Pear",
-    "Grapes",
-    "Orange",
-    "Kiwi",
-    "Watermelon",
-    "Pomegranate",
-    "Pineapple",
     "Mango",
-    "Cucumber",
-    "Carrot",
-    "Capsicum",
-    "Onion",
-    "Potato",
-    "Lemon",
-    "Tomato",
-    "Radish",
-    "Beetroot",
-    "Cabbage",
-    "Lettuce",
-    "Spinach",
-    "Soybean",
-    "Cauliflower",
-    "Bell Pepper",
-    "Chili Pepper",
-    "Turnip",
-    "Corn",
-    "Sweetcorn",
-    "Sweet Potato",
-    "Paprika",
-    "Jalepeno",
-    "Ginger",
-    "Garlic",
-    "Peas",
-    "Eggplant",
   ]
   fruits_vegs.sort()
 
@@ -67,6 +32,8 @@ def predict_fruits(model, image_path):
   return fruits_vegs[predicted_class]
 
 if __name__ == "__main__":
+   # Load the saved model
+  model = tf.keras.models.load_model('./model/MyModel.keras')
   fruits_vegs = [
     "Banana",
     "Apple",
