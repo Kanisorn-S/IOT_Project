@@ -14,6 +14,10 @@ def predict_from_cap(model, cap, path):
   fruit = predict_fruits(model, path) 
   return fruit
 
+def predict_from_path(model, path):
+  fruit = predict_fruits(model, path)
+  return fruit
+
 
 if __name__ == "__main__":
   
