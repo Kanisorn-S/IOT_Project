@@ -10,6 +10,13 @@ import requests
 from img_bb import upload_image_to_imgbb
 from picamzero import Camera
 import serial
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BCM)
+IR = 27
+
+GPIO.setup(IR, GPIO.IN)
 
 load_dotenv()
 
@@ -104,7 +111,18 @@ if __name__ == '__main__':
     else:
         print("Failed to open UART connection")
     
-    while True:
+    started = False
+
+    while not started:
+        if GPIO.input(IR) == 0:
+            print("Detect Fruit. Starting the Program")
+            started = True
+            uart.write("1\n".encode('utf-8'))
+            break
+        print("No Fruit Detected")
+        time.sleep(1)
+    
+    while started:
         # Get Data from STM32 via USART
         incoming_string = uart.readline()
         print(incoming_string)
