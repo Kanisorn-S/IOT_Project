@@ -7,9 +7,13 @@ import requests
 import os
 import requests
 import json
+import time
+import RPi.GPIO as GPIO
+# from picamzero import Camera
+# from picamera2 import Picamera2, Preview
 from dotenv import load_dotenv
 from utils.img_bb import upload_image_to_imgbb
-from utils.classify import predict_from_cap
+from utils.classify import predict_from_cap, predict_from_path
 
 # Tensorflow 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
@@ -17,7 +21,7 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
 from utils.model import predict_fruits
 
-model = tf.keras.models.load_model('./model/MyModel.keras')
+model = tf.keras.models.load_model('./model/new.h5')
 
 load_dotenv()
 
@@ -56,13 +60,11 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.payload))
-    cap = cv.VideoCapture(0)
-    ret, frame = cap.read()
-    cv.imshow("Pic", frame)
-    cv.imwrite("./images/test_img.jpg", frame)
-    cv.waitKey(1)
-    cap.release()
-    cv.destroyAllWindows()
+    # cam = Camera()
+    # cam.resolution = (1920, 1080)
+    # cam.take_photo("./live_images/test_img.jpg")
+    # cam.stop_preview()
+    os.system("libcamera-still -o ./images/test_img.jpg --vflip --hflip")
     image_url = upload_image_to_imgbb("./images/test_img.jpg", IMGBB_API_KEY)
     url = "https://api.line.me/v2/bot/message/push"
     uuid = os.environ.get('LINE_OA_UUID') 
@@ -103,38 +105,68 @@ client.username_pw_set(TOKEN, SECRET)
 client.connect(SERVER_IP, PORT)
 client.loop_start()
 
+# GPIO setup
+GPIO.setmode(GPIO.BCM)
+IR = 27
+GPIO.setup(IR, GPIO.IN)
+
 # IMGBB Setup
 IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY")
 
 started = False
+fruit_id = "69"
+fruit_conversion = {
+        "Banana": "0",
+        "Apple": "1",
+        "Mango": "2",
+}
+
 
 try: 
-  while True:
 
-    if started:
+    while not started:
+        if GPIO.input(IR) == 0:
+            print("Detect Fruit. Starting the Program")
+            # Classify fruit
+            # cam = Camera()
+            img_path = './images/current_fruit.jpg'
+            # cam.resolution = (1920, 1080)
+            # cam.start_preview()
+            # cam.take_photo(img_path)
+            # cam.stop_preview()
+            os.system("libcamera-still -o ./images/current_fruit.jpg --vflip --hflip")
+            fruit = predict_from_path(model, img_path)
+            print("Predicted fruit: ", fruit)
+            if fruit in fruit_conversion:
+                fruit_id = fruit_conversion[fruit]
+            else:
+                print(f"Fruit '{fruit}' not recognized. Defaulting to 'Unknown'.")
+                fruit_id = "69"
+            # fruit = "0"
+            uart.write("1\n".encode('utf-8'))
+            started = True
+            break
+        print("No Fruit Detected")
+        time.sleep(1)
+
+    while started:
+
+        uart.write(fruit_id.encode('utf-8'))
         # Get Data from STM32 via USART
-        data_out = uart.readline()
+        incoming_string = uart.readline()
+        print(incoming_string)
+        data = {}
+        if len(incoming_string):
+            data = json.loads(incoming_string)
+
+        data_out = json.dumps({"data": data})
+
 
         # Publish to NETPIE
         client.publish(PUBLISH_TOPIC, data_out, retain=True)
         client.publish(PUBLISH_TOPIC_2, data_out, retain=True)
         print("Publish...")
         sleep(2)
-
-    # Wait for IR sensor to detect fruit
-    elif not started and True:
-        # Classify fruit, then send fruit name to STM32 via UART
-        cap = cv.VideoCapture(0)
-        # Image classification
-        img_path = './images/fruit.png'
-        fruit = predict_from_cap(model, cap, img_path)
-        uart.write(fruit.encode('utf-8'))
-        cap.release()
-        cv.destroyAllWindows()
-        started = True
-
-    else:
-       pass
 
 except KeyboardInterrupt:
   print("Program Terminated")
