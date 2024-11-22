@@ -21,7 +21,7 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
 from utils.model import predict_fruits
 
-model = tf.keras.models.load_model('./model/MyModel.keras')
+model = tf.keras.models.load_model('./model/new.h5')
 
 load_dotenv()
 
