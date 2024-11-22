@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import cv2 as cv
 import requests
 from img_bb import upload_image_to_imgbb
+from picamzero import Camera
 
 load_dotenv()
 
@@ -32,13 +33,18 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.payload))
-    cap = cv.VideoCapture(0)
-    ret, frame = cap.read()
-    cv.imshow("Pic", frame)
-    cv.imwrite("./live_images/test_img.jpg", frame)
-    cv.waitKey(1)
-    cap.release()
-    cv.destroyAllWindows()
+    #cap = cv.VideoCapture(0)
+    #ret, frame = cap.read()
+    #cv.imshow("Pic", frame)
+    cam = Camera()
+    cam.resolution = (1920, 1080)
+    cam.start_preview()
+    cam.take_photo("./live_images/test_img.jpg")
+    cam.stop_preview()
+    #cv.imwrite("./live_images/test_img.jpg", frame)
+    #cv.waitKey(1)
+    #cap.release()
+    #cv.destroyAllWindows()
     image_url = upload_image_to_imgbb("./live_images/test_img.jpg", IMGBB_API_KEY)
     url = "https://api.line.me/v2/bot/message/push"
     uuid = os.environ.get('LINE_OA_UUID') 
