@@ -337,7 +337,8 @@ int main(void)
 			  	  HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
         }
       } else {
-        HAL_UART_Transmit(&huart2, "Waiting for Raspberry Pi to start...\r\n", 1000);
+    	char message[] = "Waiting for Raspberry Pi to start...\r\n";
+        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
         // Check for Raspberry Pi Start
         char t[8];
         if (HAL_UART_Receive(&huart1, t, 1, 1000) == HAL_OK) {
