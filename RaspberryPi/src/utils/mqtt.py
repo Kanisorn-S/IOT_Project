@@ -9,6 +9,7 @@ import cv2 as cv
 import requests
 from img_bb import upload_image_to_imgbb
 from picamzero import Camera
+import serial
 
 load_dotenv()
 
@@ -25,6 +26,7 @@ SECRET = os.environ.get('MQTT_SECRET')
 MqttUser_Pass = {"username": TOKEN, "password": SECRET}
 
 IMGBB_API_KEY = os.environ.get('IMGBB_API_KEY')
+
 
 
 def on_connect(client, userdata, flags, rc):
@@ -89,18 +91,36 @@ if __name__ == '__main__':
     client.connect(SERVER_IP, PORT)
     client.loop_start()
 
+    uart = serial.Serial(
+        port='/dev/serial0',
+        baudrate=115200,
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        timeout=1
+        )
+    if uart.isOpen():
+        print("UART connectoin established. Listening for sensor readings...")
+    else:
+        print("Failed to open UART connection")
+    
     while True:
         # Get Data from STM32 via USART
+        incoming_string = uart.readline()
+        print(incoming_string)
+        data = {}
+        if len(incoming_string):
+            data = json.loads(incoming_string)
         # Dummy Data
-        data = {
-            "temp": random.randrange(0, 100),
-            "hum": random.randrange(0, 100),
-            "red": random.randrange(0, 255),
-            "green": random.randrange(0, 255),
-            "blue": random.randrange(0, 255),
-            "alc": random.randrange(0, 100),
-            "status": "Fresh",
-        }
+        # data = {
+            # "temp": random.randrange(0, 100),
+            # "hum": random.randrange(0, 100),
+            # "red": random.randrange(0, 255),
+            # "green": random.randrange(0, 255),
+            # "blue": random.randrange(0, 255),
+            # "alc": random.randrange(0, 100),
+            # "status": "Fresh",
+        # }
         data_out = json.dumps({"data": data})
         client.publish(PUBLISH_TOPIC, data_out, retain=True)
         print("Publish...")
