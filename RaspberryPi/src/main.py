@@ -137,7 +137,11 @@ try:
             os.system("libcamera-still -o ./images/current_fruit.jpg --vflip --hflip")
             fruit = predict_from_path(model, img_path)
             print("Predicted fruit: ", fruit)
-            fruit_id = fruit_conversion[fruit]
+            if fruit in fruit_conversion:
+                fruit_id = fruit_conversion[fruit]
+            else:
+                print(f"Fruit '{fruit}' not recognized. Defaulting to 'Unknown'.")
+                fruit_id = "69"
             # fruit = "0"
             uart.write("1\n".encode('utf-8'))
             started = True
