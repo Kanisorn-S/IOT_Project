@@ -116,8 +116,8 @@ IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY")
 started = False
 fruit_id = "69"
 fruit_conversion = {
-        "Banana": "0",
-        "Apple": "1",
+        "Apple": "0",
+        "Banana": "1",
         "Mango": "2",
 }
 
@@ -128,12 +128,7 @@ try:
         if GPIO.input(IR) == 0:
             print("Detect Fruit. Starting the Program")
             # Classify fruit
-            # cam = Camera()
             img_path = './images/current_fruit.jpg'
-            # cam.resolution = (1920, 1080)
-            # cam.start_preview()
-            # cam.take_photo(img_path)
-            # cam.stop_preview()
             os.system("libcamera-still -o ./images/current_fruit.jpg --vflip --hflip")
             fruit = predict_from_path(model, img_path)
             print("Predicted fruit: ", fruit)
@@ -142,7 +137,6 @@ try:
             else:
                 print(f"Fruit '{fruit}' not recognized. Defaulting to 'Unknown'.")
                 fruit_id = "69"
-            # fruit = "0"
             uart.write("1\n".encode('utf-8'))
             started = True
             break
@@ -151,7 +145,7 @@ try:
 
     while started:
 
-        uart.write(fruit_id.encode('utf-8'))
+        uart.write(f'f{fruit_id}'.encode('utf-8'))
         # Get Data from STM32 via USART
         incoming_string = uart.readline()
         print(incoming_string)
