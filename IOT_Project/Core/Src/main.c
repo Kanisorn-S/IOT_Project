@@ -335,6 +335,7 @@ int main(void)
 
 			  	  sprintf(json_msg, "{\"red\": %d, \"green\": %d, \"blue\": %d, \"temp\": %.2f, \"hum\": %.2f, \"alc\": %.2f, \"status\": %d}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff, prev_status);
 			  	  HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
+        }
       } else {
         HAL_UART_Transmit(&huart2, "Waiting for Raspberry Pi to start...\r\n", 1000);
         // Check for Raspberry Pi Start
