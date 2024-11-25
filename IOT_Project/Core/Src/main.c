@@ -262,12 +262,16 @@ int main(void)
     	    max_bi = BI_MANGO;
         }
 
-        // Read Temperature and Humidity from DHT22
-		    if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
-		    	char message[] = "DHT22 is activated. Reading...\r\n";
-		    	HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
-		  	  DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
-		  	}
+
+        // Read Temperature and Humidity from UART
+        char uart_buffer[50];
+        if (HAL_UART_Receive(&huart2, (uint8_t *)uart_buffer, sizeof(uart_buffer), 1000) == HAL_OK) {
+            if (uart_buffer[0] == 't') {
+                sscanf(uart_buffer, "t%f\n", &DHT_22.temp_C);
+            } else if (uart_buffer[0] == 'h') {
+                sscanf(uart_buffer, "h%f\n", &DHT_22.humidity);
+            }
+        }
 
         // Read Color from TCS3200
 		  	uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
