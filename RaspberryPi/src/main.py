@@ -209,7 +209,20 @@ try:
                 data = json.loads(incoming_string)
                 data["temp"] = temp
                 data["hum"] = hum
-                # if data["status"] == 0:
+                if data["status"] == 0:
+                    print("STM32 returned status 0.") 
+                    if fruit_id == 0:
+                        print("Checking apple status...")
+                        data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_APPLE_MIN, HUM_APPLE_MAX)
+                        print(data["status"])
+                    elif fruit_id == 1:
+                        print("Checking banana status...")
+                        data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_BANANA_MIN, HUM_BANANA_MAX)
+                        print(data["status"])
+                    elif fruit_id == 2:
+                        print("Checking mango status...")
+                        data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_MANGO_MIN, HUM_MANGO_MAX)
+                        print(data["status"])
                     # match fruit_id:
                         # case '0':
                             # data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_APPLE_MIN, HUM_APPLE_MAX)
