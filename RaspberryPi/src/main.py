@@ -121,6 +121,8 @@ fruit_conversion = {
         "Mango": "2",
 }
 
+first_request = True
+
 
 try: 
 
@@ -149,7 +151,9 @@ try:
         # Get Data from STM32 via USART
         incoming_string = uart.readline()
         print(incoming_string)
-        data = {}
+        if first_request:
+            data = {}
+            first_request = False
         if len(incoming_string):
             try:
                 data = json.loads(incoming_string)
