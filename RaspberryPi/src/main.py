@@ -153,8 +153,8 @@ try:
         if len(incoming_string):
             try:
                 data = json.loads(incoming_string)
-            except json.JSONDecodeError:
-                print("Received data is not a valid JSON")
+            except Exception as e:
+                print(f"Error processing incoming data: {e}")
                 continue
 
         data_out = json.dumps({"data": data})
@@ -167,9 +167,9 @@ try:
         sleep(2)
 
 except KeyboardInterrupt:
-  print("Program Terminated")
+    print("Program Terminated")
 
 finally:
-  uart.close()
-  cv.destroyAllWindows()
-  print("Clean up...")
+    uart.close()
+    cv.destroyAllWindows()
+    print("Clean up...")
