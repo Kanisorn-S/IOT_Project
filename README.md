@@ -5,9 +5,12 @@
 - MQ3 Gas Sensor
 - TCS3200 Color Sensor
 - Active Buzzer
+- CSI Camera
+- IR Sensor
 
 ## Connection and Circuit Diagram
-![image](https://github.com/user-attachments/assets/bfc55b73-6416-45ff-8c6e-e9e7af903a88)
+![image](https://github.com/user-attachments/assets/5d47f8a6-cf87-4219-b44f-9f1b35323d4d)
+
 
 ## Interfacing with Sensors and Buzzer
 
@@ -32,11 +35,31 @@ The DHT22 sensor provides both temperature in Deg.C (T) and relative humidity(RH
 ![image](https://github.com/user-attachments/assets/e9fb75c8-2cee-4072-9824-9c2671902ee4)
 
 
-The source code used for interfacing with DHT22 in this project is from https://microcontrollerslab.com/dht22-stm32-blue-pill-stm32cubeide/ which provides 2 main functions: 
-- ``DHT22_Start``: Initiate the communication protocol
-- ``DHT22_Read``: Read the data sent by the DHT22
+We uses the ``Adafruit-CircuitPython-DHT`` library on the Raspberry Pi 4 in order to read the temperature and humidity from the DHT22.
 
-We then turn the implementation in main into another function called ``DHT22_Read_All``, which reads both humidity and temperature, storing them into a variable, and performs the checksum procedure.
+The Library can be installed using ``pip install adafruit-circuitpython-dht``.
+
+We can get the temperature and humidity by first creating a DHT22 object. Then, in a while loop, we can access the temperature and humidity through the DHT22 attributes with the corresponding name.
+
+```python
+import adafruit_dht
+import board
+from time import sleep
+
+sensor = adafruit_dht.DHT22(board.D4)
+while True:
+  try:
+    temp = sensor.temperature
+    hum = sensor.humidity
+  except RuntimeError as error:
+    print(error.args[0])
+    sleep(2)
+    continue
+  except Exception as error:
+    sensor.exit()
+    raise error
+```
+
 
 ### TCS3200
 
@@ -80,6 +103,28 @@ The active buzzer we use is an active low buzzer; therefore, to turn the buzzer 
 #### Active vs Passive Buzzer
 An active buzzer has a built-in oscillator while a passive buzzer doesn't. An active buzzer can produce sound with only a DC power supply, making it easier and simpler to implement. A passive buzzer, on the other hand, needs an AC signal in order to produce a sound, making it harder and more complex; however, it does have the capability of varying the pitch and tone of the sound being produced.
 
+### IR Sensor
+
+We use the IR Sensor to detect when the user places a fruit in the box. When the IR sensor detects the fruit within the box, the main program can begin.
+
+We connected the IR sensor to the Raspberry Pi and implemented its functionality using the RPi.GPIO library, which can be installed using ``pip install RPi.GPIO``.
+
+For the implementation, we first setup the GPIO pin to the correct mode. Then, within a while loop, we check the value of the GPIO pin that is connected to the OUT pin of the IR sensor. Since the IR sensor is active low, when the value of the GPIO pin is 0, we begin the main program.
+
+```python
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
+IR_PIN = 27
+GPIO.setup(IR_PIN, GPIO.IN)
+
+while True:
+  if GPIO.input(IR_PIN) == 0:
+    # Begin the main program
+    ...
+```
+
+
 ## Flash Memory
 
 In order to improve the practicality and usability of the project, we utilize the flash memory of the STM32 board. Our project measures and detects fruit spoilage by comparing the current readings of alcohol level and several variables of colors to the initial value when the program first began. We can obviously keep the board plugged in all the time and have the program constantly running; however, this could be quite inefficient and hard to perform tests on. In order to combat this, we would store the initial readings of the values used in flash memory, then allow the user to begin the program in memory mode to retrieve those initial values from memory instead of re-recording the initial values.
@@ -116,9 +161,8 @@ We then recheck the status of the button to see if it is being held down or not.
   - (uint8_t) `blue_hex` [Blue Hex value from 0-255]
 
 - DHT22 Temperature and Humidity Sensor:
-  - (float) `DHT_22.temp_C` [Temperature in Celcius]
-  - (float) `DHT_22.temp_F` [Temperature in Farenheit]
-  - (float) `DHT_22.humidity` [Relative Humidity in Percentage]
+  - (float) `sensor.temperature` [Temperature in Celcius]
+  - (float) `sensor.humidity` [Relative Humidity in Percentage]
 
 - MQ3 Alcohol Sensor
   - (uint16_t) `alcohol_level` [Alcohol reading from 0-4095]
