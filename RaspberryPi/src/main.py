@@ -116,7 +116,7 @@ GPIO.setup(IR, GPIO.IN)
 IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY")
 
 started = False
-fruit_id = "69"
+# fruit_id = "69"
 fruit_conversion = {
         "Apple": "0",
         "Banana": "1",
@@ -135,17 +135,6 @@ HUM_MANGO_MAX = 95
 
 # Initialize DHT22
 sensor = adafruit_dht.DHT22(board.D4)
-def send_dht(uart, temp, hum):
-    temp_str = str(temp)
-    hum_str = str(hum)
-    uart.write("t".encode('utf-8'))
-    for num in temp_str:
-        uart.write(num.encode('utf-8'))
-    uart.write("\n".encode('utf-8'))
-    uart.write("h".encode('utf-8'))
-    for num in hum_str:
-        uart.write(num.encode('utf-8'))
-    uart.write("\n".encode('utf-8'))
 
 def temp_status(temp, temp_max, hum, hum_min, hum_max):
     if temp > temp_max:
@@ -168,6 +157,7 @@ try:
             fruit = predict_from_path(model, img_path)
             print("Predicted fruit: ", fruit)
             if fruit in fruit_conversion:
+                global fruit_id
                 fruit_id = str(fruit_conversion[fruit])
             else:
                 print(f"Fruit '{fruit}' not recognized. Defaulting to 'Unknown'.")
@@ -189,7 +179,7 @@ try:
             print("Temp: ", temp)
             print("Hum: ", hum)
         except RuntimeError as error:
-            print(error.args[0])
+            # print(error.args[0])
             sleep(2)
             continue
         except Exception as error:
@@ -197,10 +187,7 @@ try:
             raise error
         # Get Data from STM32 via USART
         incoming_string = uart.readline()
-        print(incoming_string)
-        send_dht(uart, temp, hum)
-        # uart.write(f't{temp}\n'.encode('utf-8'))
-        # uart.write(f'h{hum}\n'.encode('utf-8'))
+        # print(incoming_string)
         if first_request:
             data = {}
             first_request = False
@@ -211,28 +198,23 @@ try:
                 data["hum"] = hum
                 if data["status"] == 0:
                     print("STM32 returned status 0.") 
-                    if fruit_id == 0:
+                    print("Current fruit_id: ", fruit_id)
+                    if fruit_id == '0':
                         print("Checking apple status...")
                         data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_APPLE_MIN, HUM_APPLE_MAX)
                         print(data["status"])
-                    elif fruit_id == 1:
+                    elif fruit_id == '1':
                         print("Checking banana status...")
                         data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_BANANA_MIN, HUM_BANANA_MAX)
                         print(data["status"])
-                    elif fruit_id == 2:
+                    elif fruit_id == '2':
                         print("Checking mango status...")
                         data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_MANGO_MIN, HUM_MANGO_MAX)
                         print(data["status"])
-                    # match fruit_id:
-                        # case '0':
-                            # data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_APPLE_MIN, HUM_APPLE_MAX)
-                            # break
-                        # case '1':
-                            # data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_BANANA_MIN, HUM_BANANA_MAX)
-                            # break
-                        # case '2':
-                            # data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_MANGO_MIN, HUM_MANGO_MAX)
-                            # break
+
+                current_status = str(data["status"])
+                uart.write(current_status.encode('utf-8'))
+
 
             except Exception as e:
                 print(f"Error processing incoming data: {e}")
