@@ -177,6 +177,8 @@ try:
                 data = json.loads(incoming_string)
                 data["temp"] = temp
                 data["hum"] = hum
+                uart.write(f't{temp}\n'.encode('utf-8'))
+                uart.write(f'h{hum}\n'.encode('utf-8'))
             except Exception as e:
                 print(f"Error processing incoming data: {e}")
                 continue
