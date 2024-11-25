@@ -1,10 +1,15 @@
-import Adafruit_DHT
+import pigpio
+import DHT22
 
-DHT_SENSOR = Adafruit_DHT.DHT22
 DHT_PIN = 4  # GPIO pin where the DHT22 is connected
 
+pi = pigpio.pi()
+sensor = DHT22.sensor(pi, DHT_PIN)
+
 def read_dht22():
-    humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
+    sensor.trigger()
+    humidity = sensor.humidity()
+    temperature = sensor.temperature()
     if humidity is not None and temperature is not None:
         return {'temperature': temperature, 'humidity': humidity}
     else:
