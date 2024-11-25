@@ -14,6 +14,8 @@ import RPi.GPIO as GPIO
 from dotenv import load_dotenv
 from utils.img_bb import upload_image_to_imgbb
 from utils.classify import predict_from_cap, predict_from_path
+import board
+import adafruit_dht
 
 # Tensorflow 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
@@ -123,6 +125,9 @@ fruit_conversion = {
 
 first_request = True
 
+# Initialize DHT22
+sensor = adafruit_dht.DHT22(board.D4)
+
 
 try: 
 
@@ -147,6 +152,19 @@ try:
 
     while started:
 
+        # Get Data from DHT22
+        try:
+            temp = sensor.temperature
+            hum = sensor.humidity
+            print("Temp: ", temp)
+            print("Hum: ", hum)
+        except RuntimeError as error:
+            print(error.args[0])
+            sleep(2)
+            continue
+        except Exception as error:
+            sensor.exit()
+            raise error
         uart.write(f'f{fruit_id}'.encode('utf-8'))
         # Get Data from STM32 via USART
         incoming_string = uart.readline()
@@ -157,6 +175,8 @@ try:
         if len(incoming_string):
             try:
                 data = json.loads(incoming_string)
+                data["temp"] = temp
+                data["hum"] = hum
             except Exception as e:
                 print(f"Error processing incoming data: {e}")
                 continue
