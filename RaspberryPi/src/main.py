@@ -9,8 +9,6 @@ import requests
 import json
 import time
 import RPi.GPIO as GPIO
-# from picamzero import Camera
-# from picamera2 import Picamera2, Preview
 from dotenv import load_dotenv
 from utils.img_bb import upload_image_to_imgbb
 from utils.classify import predict_from_cap, predict_from_path
@@ -62,10 +60,6 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.payload))
-    # cam = Camera()
-    # cam.resolution = (1920, 1080)
-    # cam.take_photo("./live_images/test_img.jpg")
-    # cam.stop_preview()
     os.system("libcamera-still -o ./images/test_img.jpg --vflip --hflip")
     image_url = upload_image_to_imgbb("./images/test_img.jpg", IMGBB_API_KEY)
     url = "https://api.line.me/v2/bot/message/push"
@@ -92,6 +86,67 @@ def on_message(client, userdata, msg):
         "messages": [
             msg,
             current_img
+        ]
+    }
+
+    res = requests.post(url, headers=headers, data=json.dumps(data))
+    print(res.text)
+    
+# Line Messaging
+PACKAGE_ID = 11537
+ALERT_STICKER_ID = 52002749
+OK_STICKER_ID = 52002734
+MAD_STICKER_ID = 52002767
+# Status 2 is High Risk of Spoilage
+STATUS_TWO_MESSAGE = "Your fruit is at high risk of spoilage. Please check the fruit status."
+# Status 1 is Low Risk of Spoilage due to improper temperature or humidity
+STATUS_ONE_MESSAGE = "Your fruit is at low risk of spoilage. The storage conditions are not optimal. Please check the fruit status."
+# Status 0 is Normal
+STATUS_ZERO_MESSAGE = "Your fruit is in good condition."
+
+def send_message(text: str):
+    url = "https://api.line.me/v2/bot/message/push"
+    uuid = os.environ.get('LINE_OA_UUID') 
+    token = os.environ.get('LINE_OA_TOKEN')
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
+
+    msg = {
+        "type": "text",
+        "text": text,
+    }
+
+    data = {
+        "to": uuid,
+        "messages": [
+            msg,
+        ]
+    }
+
+    res = requests.post(url, headers=headers, data=json.dumps(data))
+    print(res.text)
+
+def send_sticker(sticker_id: int):
+    url = "https://api.line.me/v2/bot/message/push"
+    uuid = os.environ.get('LINE_OA_UUID') 
+    token = os.environ.get('LINE_OA_TOKEN')
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
+
+    sticker = {
+        "type": "sticker",
+        "packageId": PACKAGE_ID,
+        "stickerId": sticker_id,
+    }
+
+    data = {
+        "to": uuid,
+        "messages": [
+            sticker,
         ]
     }
 
@@ -125,6 +180,7 @@ fruit_conversion = {
 
 first_request = True
 
+# Threshold constants for temperature and humidity
 TEMP_THRESHOLD = 28
 HUM_APPLE_MIN = 90
 HUM_APPLE_MAX = 95
@@ -144,6 +200,10 @@ def temp_status(temp, temp_max, hum, hum_min, hum_max):
     else:
         return 0
 
+# Track Fruit Status
+STATUS_DEBOUNCE_TIME = 5
+prev_status = 0
+status_debounce = 0
 
 
 try: 
@@ -214,6 +274,21 @@ try:
 
                 current_status = str(data["status"])
                 uart.write(current_status.encode('utf-8'))
+                if current_status != prev_status:
+                    status_debounce+=1
+                    if status_debounce >= STATUS_DEBOUNCE_TIME:
+                        if current_status == "2":
+                            send_message(STATUS_TWO_MESSAGE)
+                            send_sticker(MAD_STICKER_ID)
+                            prev_status = current_status
+                        elif current_status == "1":
+                            send_message(STATUS_ONE_MESSAGE)
+                            send_sticker(ALERT_STICKER_ID)
+                            prev_status = current_status
+                        else:
+                            send_message(STATUS_TWO_MESSAGE)
+                            send_sticker(OK_STICKER_ID)
+                            prev_status = current_status
 
 
             except Exception as e:
