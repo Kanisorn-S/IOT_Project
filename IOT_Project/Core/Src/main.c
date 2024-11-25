@@ -227,6 +227,7 @@ int main(void)
   int status_debounce = 0;
   int prev_status = 0;
   char fruit;
+  int index = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -240,6 +241,8 @@ int main(void)
         // Main Program
         // Set thresholds based on the fruit
         if (fruit == '0') {
+        char message[] = "Fruit is Apple...\r\n";
+        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
           min_hum = HUM_APPLE_MIN;
           max_hum = HUM_APPLE_MAX;
           max_alc = ALC_APPLE;
@@ -247,6 +250,8 @@ int main(void)
           max_cc = CC_APPLE;
           max_bi = BI_APPLE;
         } else if (fruit == '1') {
+        	char message[] = "Fruit is Banana...\r\n";
+        	        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
     	    min_hum = HUM_BANANA_MIN;
     	    max_hum = HUM_BANANA_MAX;
     	    max_alc = ALC_BANANA;
@@ -254,6 +259,8 @@ int main(void)
     	    max_cc = CC_BANANA;
     	    max_bi = BI_BANANA;
         } else if (fruit == '2') {
+        	char message[] = "Fruit is Mango...\r\n";
+        	        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
     	    min_hum = HUM_MANGO_MIN;
     	    max_hum = HUM_MANGO_MAX;
     	    max_alc = ALC_MANGO;
@@ -264,14 +271,32 @@ int main(void)
 
 
         // Read Temperature and Humidity from UART
-        char uart_buffer[50];
-        if (HAL_UART_Receive(&huart2, (uint8_t *)uart_buffer, sizeof(uart_buffer), 1000) == HAL_OK) {
-            if (uart_buffer[0] == 't') {
-                sscanf(uart_buffer, "t%f\n", &DHT_22.temp_C);
-            } else if (uart_buffer[0] == 'h') {
-                sscanf(uart_buffer, "h%f\n", &DHT_22.humidity);
-            }
-        }
+
+        char t[8];
+        	  if (HAL_UART_Receive(&huart1, t + index, 1, 1000) == HAL_OK) {
+        		  HAL_UART_Transmit(&huart2, t + index, 1, 1000);
+        		  index = index + 1;
+        		  if (index >= 8) {
+        			  index = 0;
+        		  }
+        		  if (t[index-1] == '\r' || t[index-1] == '\n') {
+        			  if (t[0] == 't')
+        				  sscanf(t, "t%f", &DHT_22.temp_C);
+        			  if (t[0] == 'h')
+        				  sscanf(t, "h%f", &DHT_22.humidity);
+        			  index = 0;
+        		  }
+       }
+//        char uart_buffer[50];
+//        if (HAL_UART_Receive(&huart1, sizeof(uart_buffer), 20, 1000) == HAL_OK) {
+//            if (uart_buffer[0] == 't') {
+//                sscanf(uart_buffer, "t%f\n", &DHT_22.temp_C);
+//                HAL_UART_Transmit(&huart2, uart_buffer, strlen(uart_buffer), 1000);
+//            } else if (uart_buffer[0] == 'h') {
+//                sscanf(uart_buffer, "h%f\n", &DHT_22.humidity);
+//                HAL_UART_Transmit(&huart2, uart_buffer, strlen(uart_buffer), 1000);
+//            }
+//        }
 
         // Read Color from TCS3200
 		  	uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
@@ -360,9 +385,12 @@ int main(void)
             }
             // Wait for Raspberry Pi to send fruit
             while (!know_fruit) {
-              if (HAL_UART_Receive(&huart1, t, 1, 1000) == HAL_OK) {
+              if (HAL_UART_Receive(&huart1, t, 2, 1000) == HAL_OK) {
                 if (t[0] == 'f') {
                   fruit = t[1];
+                  char fruity[10];
+                  sprintf(fruity, "fruit: %c", fruit);
+                  HAL_UART_Transmit(&huart2, fruity, strlen(fruity), 1000);
                   know_fruit = true;
                   write_fruit_to_flash(FRUIT_ADDRESS, fruit);
                 }
@@ -791,13 +819,13 @@ int check_fruit_condition(float temperature, float alc_level, float alc_threshol
 	if ((l_value < l_threshold) || (bi_value > bi_threshold) || (cc_value > cc_threshold)) {
 				return 2;
 	}
-	if (temperature > TEMP_THRESHOLD) {
-		return 1;
-	}
-
-	if ((humidity < min_hum || humidity > max_hum)) {
-			return 1;
-	}
+//	if (temperature > TEMP_THRESHOLD) {
+//		return 1;
+//	}
+//
+//	if ((humidity < min_hum || humidity > max_hum)) {
+//			return 1;
+//	}
 
 
 	return 0;
