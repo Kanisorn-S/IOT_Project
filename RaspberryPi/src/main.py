@@ -209,17 +209,17 @@ try:
                 data = json.loads(incoming_string)
                 data["temp"] = temp
                 data["hum"] = hum
-                if data["status"] == 0:
-                    match fruit_id:
-                        case '0':
-                            data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_APPLE_MIN, HUM_APPLE_MAX)
-                            break
-                        case '1':
-                            data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_BANANA_MIN, HUM_BANANA_MAX)
-                            break
-                        case '2':
-                            data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_MANGO_MIN, HUM_MANGO_MAX)
-                            break
+                # if data["status"] == 0:
+                    # match fruit_id:
+                        # case '0':
+                            # data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_APPLE_MIN, HUM_APPLE_MAX)
+                            # break
+                        # case '1':
+                            # data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_BANANA_MIN, HUM_BANANA_MAX)
+                            # break
+                        # case '2':
+                            # data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_MANGO_MIN, HUM_MANGO_MAX)
+                            # break
 
             except Exception as e:
                 print(f"Error processing incoming data: {e}")
@@ -239,5 +239,4 @@ except KeyboardInterrupt:
 
 finally:
     uart.close()
-    cv.destroyAllWindows()
     print("Clean up...")
