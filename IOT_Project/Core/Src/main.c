@@ -164,9 +164,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	int i = 0;
 	for (i = 0; i < 10000000; i++);
 	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
+		char message[] = "Starting STM32 in memory mode...\r\n";
+		HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
 		stm_started = true;
 		use_mem = true;
 	} else {
+		char message[] = "Starting STM32 in normal mode...\r\n";
+		HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
 		stm_started = true;
 		use_mem = false;
 	}
@@ -260,6 +264,8 @@ int main(void)
 
         // Read Temperature and Humidity from DHT22
 		    if(DHT22_Start(DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis)){
+		    	char message[] = "DHT22 is activated. Reading...\r\n";
+		    	HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
 		  	  DHT22_Read_All(&DHT_22, &huart2, DHT22_PORT, DHT22_PIN, &htim1, pPMillis, pCMillis);
 		  	}
 
