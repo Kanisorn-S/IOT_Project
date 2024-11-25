@@ -133,7 +133,7 @@ try:
             fruit = predict_from_path(model, img_path)
             print("Predicted fruit: ", fruit)
             if fruit in fruit_conversion:
-                fruit_id = f'f{fruit_conversion[fruit]}'
+                fruit_id = 'fruit_conversion[fruit]'
             else:
                 print(f"Fruit '{fruit}' not recognized. Defaulting to 'Unknown'.")
                 fruit_id = "69"
@@ -151,7 +151,11 @@ try:
         print(incoming_string)
         data = {}
         if len(incoming_string):
-            data = json.loads(incoming_string)
+            try:
+                data = json.loads(incoming_string)
+            except json.JSONDecodeError:
+                print("Received data is not a valid JSON")
+                continue
 
         data_out = json.dumps({"data": data})
 
