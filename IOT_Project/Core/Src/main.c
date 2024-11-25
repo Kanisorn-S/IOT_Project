@@ -78,8 +78,8 @@
 #define BUZZER_PIN GPIO_PIN_3
 
 // General Settings
-#define CALIBRATION_TIME 20
-#define STATUS_DEBOUNCE_TIME 10
+#define CALIBRATION_TIME 5
+#define STATUS_DEBOUNCE_TIME 5
 #define FLASH_ADDRESS 0x08040000
 #define FRUIT_ADDRESS 0x08060000
 
@@ -239,54 +239,54 @@ int main(void)
       // Raspberry Pi started
       if (started) {
         // Main Program
-        // Set thresholds based on the fruit
-        if (fruit == '0') {
-        char message[] = "Fruit is Apple...\r\n";
-        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
-          min_hum = HUM_APPLE_MIN;
-          max_hum = HUM_APPLE_MAX;
-          max_alc = ALC_APPLE;
-          min_l = L_APPLE;
-          max_cc = CC_APPLE;
-          max_bi = BI_APPLE;
-        } else if (fruit == '1') {
-        	char message[] = "Fruit is Banana...\r\n";
-        	        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
-    	    min_hum = HUM_BANANA_MIN;
-    	    max_hum = HUM_BANANA_MAX;
-    	    max_alc = ALC_BANANA;
-    	    min_l = L_BANANA;
-    	    max_cc = CC_BANANA;
-    	    max_bi = BI_BANANA;
-        } else if (fruit == '2') {
-        	char message[] = "Fruit is Mango...\r\n";
-        	        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
-    	    min_hum = HUM_MANGO_MIN;
-    	    max_hum = HUM_MANGO_MAX;
-    	    max_alc = ALC_MANGO;
-    	    min_l = L_MANGO;
-    	    max_cc = CC_MANGO;
-    	    max_bi = BI_MANGO;
-        }
+//        // Set thresholds based on the fruit
+//        if (fruit == '0') {
+//        char message[] = "Fruit is Apple...\r\n";
+//        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
+//          min_hum = HUM_APPLE_MIN;
+//          max_hum = HUM_APPLE_MAX;
+//          max_alc = ALC_APPLE;
+//          min_l = L_APPLE;
+//          max_cc = CC_APPLE;
+//          max_bi = BI_APPLE;
+//        } else if (fruit == '1') {
+//        	char message[] = "Fruit is Banana...\r\n";
+//        	        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
+//    	    min_hum = HUM_BANANA_MIN;
+//    	    max_hum = HUM_BANANA_MAX;
+//    	    max_alc = ALC_BANANA;
+//    	    min_l = L_BANANA;
+//    	    max_cc = CC_BANANA;
+//    	    max_bi = BI_BANANA;
+//        } else if (fruit == '2') {
+//        	char message[] = "Fruit is Mango...\r\n";
+//        	        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
+//    	    min_hum = HUM_MANGO_MIN;
+//    	    max_hum = HUM_MANGO_MAX;
+//    	    max_alc = ALC_MANGO;
+//    	    min_l = L_MANGO;
+//    	    max_cc = CC_MANGO;
+//    	    max_bi = BI_MANGO;
+//        }
 
 
         // Read Temperature and Humidity from UART
 
-        char t[8];
-        	  if (HAL_UART_Receive(&huart1, t + index, 1, 1000) == HAL_OK) {
-        		  HAL_UART_Transmit(&huart2, t + index, 1, 1000);
-        		  index = index + 1;
-        		  if (index >= 8) {
-        			  index = 0;
-        		  }
-        		  if (t[index-1] == '\r' || t[index-1] == '\n') {
-        			  if (t[0] == 't')
-        				  sscanf(t, "t%f", &DHT_22.temp_C);
-        			  if (t[0] == 'h')
-        				  sscanf(t, "h%f", &DHT_22.humidity);
-        			  index = 0;
-        		  }
-       }
+//        char t[8];
+//        	  if (HAL_UART_Receive(&huart1, t + index, 1, 1000) == HAL_OK) {
+//        		  HAL_UART_Transmit(&huart2, t + index, 1, 1000);
+//        		  index = index + 1;
+//        		  if (index >= 8) {
+//        			  index = 0;
+//        		  }
+//        		  if (t[index-1] == '\r' || t[index-1] == '\n') {
+//        			  if (t[0] == 't')
+//        				  sscanf(t, "t%f", &DHT_22.temp_C);
+//        			  if (t[0] == 'h')
+//        				  sscanf(t, "h%f", &DHT_22.humidity);
+//        			  index = 0;
+//        		  }
+//       }
 //        char uart_buffer[50];
 //        if (HAL_UART_Receive(&huart1, sizeof(uart_buffer), 20, 1000) == HAL_OK) {
 //            if (uart_buffer[0] == 't') {
@@ -343,9 +343,19 @@ int main(void)
 	  	  	sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
 			  	sprintf(mq3_readings, "Alc: %.2f \%\r\n", alc_diff);
 			  	sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nColor Variables: %s\r\n", dht22_readings, mq3_readings, l_l0);
-			  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
+//			  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
 
-			  	int status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
+			  	int temp_status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
+			  	char s[8];
+			  	int status;
+			  	if (HAL_UART_Receive(&huart1, s, 1, 1000) == HAL_OK) {
+			  	                  status = s[0] - '0';
+			  	                  char rasp_status[20];
+			  	                  sprintf(rasp_status, "status from rasp: %d", status);
+			  	                  HAL_UART_Transmit(&huart2, rasp_status, strlen(rasp_status), 1000);
+
+			  	                }
+
 			  	if (status != prev_status) {
 			  	  status_debounce = status_debounce + 1;
 			  	} else {
@@ -398,6 +408,37 @@ int main(void)
             }
             read_fruit_from_flash(FRUIT_ADDRESS, &fruit);
             started = true;
+
+            // Set thresholds based on the fruit
+                    if (fruit == '0') {
+                    char message[] = "Fruit is Apple...\r\n";
+                    HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
+                      min_hum = HUM_APPLE_MIN;
+                      max_hum = HUM_APPLE_MAX;
+                      max_alc = ALC_APPLE;
+                      min_l = L_APPLE;
+                      max_cc = CC_APPLE;
+                      max_bi = BI_APPLE;
+                    } else if (fruit == '1') {
+                    	char message[] = "Fruit is Banana...\r\n";
+                    	        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
+                	    min_hum = HUM_BANANA_MIN;
+                	    max_hum = HUM_BANANA_MAX;
+                	    max_alc = ALC_BANANA;
+                	    min_l = L_BANANA;
+                	    max_cc = CC_BANANA;
+                	    max_bi = BI_BANANA;
+                    } else if (fruit == '2') {
+                    	char message[] = "Fruit is Mango...\r\n";
+                    	        HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
+                	    min_hum = HUM_MANGO_MIN;
+                	    max_hum = HUM_MANGO_MAX;
+                	    max_alc = ALC_MANGO;
+                	    min_l = L_MANGO;
+                	    max_cc = CC_MANGO;
+                	    max_bi = BI_MANGO;
+                    }
+
           }
         }
       }
