@@ -365,6 +365,9 @@ int main(void)
       }
 
 
+	  } else {
+		  char message[] = "Waiting for STM32 to start...\r\n";
+		  HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
 	  }
 
 	  HAL_Delay(1000);
