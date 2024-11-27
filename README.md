@@ -246,7 +246,7 @@ sns.heatmap(confusion_matrix(y_true, y_pred_classes), annot=True, fmt=".0f", cma
 - Matplotlib
 - Seaborn
 - Scikit-learn
-- 
+  
 ---
 
 ## Instructions to Run
