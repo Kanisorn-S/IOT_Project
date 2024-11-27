@@ -170,3 +170,102 @@ We then recheck the status of the button to see if it is being held down or not.
 - Active Buzzer
   - Turn On: ```HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);```
   - Turn Off: ```HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);```
+ 
+
+
+### Fruit Classification using TensorFlow Keras
+
+This project implements a fruit classification system for three classes: Apple, Banana, and Mango, using TensorFlow Keras. It leverages image preprocessing, a Convolutional Neural Network (CNN), and visual evaluation tools for performance analysis.
+
+---
+
+# Fruit Classification with Webcam using Tensorflow and Keras
+
+1. **Dataset Preprocessing**:
+   - Images resized to `224x224x3`.
+   - Normalized pixel values (0-1 range).
+   - Augmented using `ImageDataGenerator` for better generalization.
+
+2. **Model Architecture**:
+   - Three convolutional layers with increasing filters (8, 16, 32).
+   - Dropout regularization (35%) to reduce overfitting.
+   - Fully connected layers with 256 and 128 neurons.
+   - Output layer with 3 neurons using softmax activation.
+
+3. **Training Pipeline**:
+   - Data split: 75% training, 25% validation.
+   - Augmentation: Rotation, zoom, and shifts applied dynamically.
+   - Trained for 100 epochs using Adam optimizer and categorical crossentropy loss.
+
+---
+
+### 1. Accuracy Graph
+
+Tracks validation accuracy over epochs:
+```python
+plt.plot(history.history["val_accuracy"], color="r", label="Validation Accuracy")
+plt.title("Accuracy Graph")
+plt.xlabel("Number of Epochs")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.grid()
+plt.show()
+```
+![acc_graph](https://github.com/user-attachments/assets/4294d723-4ec8-4429-88f3-bc381c8d558b)
+
+
+### 2. Confusion Matrix
+Shows classification performance for each class:
+```python
+from sklearn.metrics import confusion_matrix
+sns.heatmap(confusion_matrix(y_true, y_pred_classes), annot=True, fmt=".0f", cmap="Blues")
+```
+![confusion_matrix](https://github.com/user-attachments/assets/2e8331ad-a502-4946-b8c2-a202a9cf3a1e)
+
+---
+
+## Results
+
+- **Validation Accuracy**: Achieved high accuracy on validation data (specific value depends on the trained model).
+- **Confusion Matrix**: Highlights correct and misclassified predictions across Apple, Banana, and Mango classes.
+
+---
+
+## Dependencies
+
+- Python 3.7+
+- TensorFlow/Keras
+- NumPy
+- OpenCV
+- Matplotlib
+- Seaborn
+- Scikit-learn
+
+Install dependencies:
+```bash
+pip install tensorflow opencv-python numpy matplotlib seaborn scikit-learn
+```
+
+---
+
+## Instructions to Run
+
+1. **Dataset Preparation**:
+   - Ensure the dataset is structured with separate folders for training and testing data.
+   - Classes: `Apple`, `Banana`, `Mango`.
+
+2. **Train the Model**:
+   - Run the training script provided to preprocess images, build the CNN model, and train it.
+
+3. **Evaluate the Model**:
+   - Generate accuracy graphs and confusion matrix plots to assess performance.
+
+4. **Export for live-cam fruit detection**:
+   - Use the `.h5` file from this model to implement **live-cam fruit detection** for real-time classification.
+
+---
+
+## References
+
+- Dataset and code available on [Kaggle](https://www.kaggle.com/code/methasitboonpun/fruit-classification-that-worked-but-bad-data).
+```
