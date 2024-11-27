@@ -219,9 +219,7 @@ Shows classification performance for each class:
 from sklearn.metrics import confusion_matrix
 sns.heatmap(confusion_matrix(y_true, y_pred_classes), annot=True, fmt=".0f", cmap="Blues")
 ```
-![confusion_matrix](https://github.com/user-attachments/assets/2e8331ad-a502-4946-b8c2-a202a9cf3a1e)
-
-
+![image](https://github.com/user-attachments/assets/58e3510c-f972-4125-ae6a-efddedd831b6)
 
 
 ---
