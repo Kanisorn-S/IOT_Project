@@ -4,9 +4,9 @@
 - DHT22 Temperature and Humidity Sensor
 - MQ3 Gas Sensor
 - TCS3200 Color Sensor
-- Active Buzzer
 - CSI Camera
 - IR Sensor
+- Active Buzzer (Neither sensor nor actuator)
 
 ## Connection and Circuit Diagram
 ![image](https://github.com/user-attachments/assets/5d47f8a6-cf87-4219-b44f-9f1b35323d4d)
@@ -60,6 +60,7 @@ while True:
     raise error
 ```
 
+---
 
 ### TCS3200
 
@@ -80,6 +81,8 @@ After selecting the frequency and filter, we read the input through the connecti
 
 In tcs3200.c, we override the function ``HAL_TIM_IC_CaptureCallback`` to read the frequency of the square wave signal received then storing the frequency into a variable that can be used in the main program.
 
+---
+
 ### MQ3
 
 The MQ3 communicates with a microcontroller by sending an analog signal which varies based on the alcohol concentration in the surrounding air. We connect the Analog OUT pin of the MQ3 to PA0 to utilize the ADC1 IN1 to read and convert the analog value.
@@ -89,6 +92,8 @@ The MQ3 operates at a 5V logic level while the STM32 gpio pins operate at 3.3V l
 
 #### Reading the Analog Value
 We used ADC1 IN0 on the STM32 in order to read the analog value sent from the MQ3. We used ``HAL_ADC_PollForConversion`` and ``HAL_ADC_GetValue`` within the main program to retrieve the value from the MQ3
+
+---
 
 ### Buzzer
 
@@ -102,6 +107,8 @@ The active buzzer we use is an active low buzzer; therefore, to turn the buzzer 
 
 #### Active vs Passive Buzzer
 An active buzzer has a built-in oscillator while a passive buzzer doesn't. An active buzzer can produce sound with only a DC power supply, making it easier and simpler to implement. A passive buzzer, on the other hand, needs an AC signal in order to produce a sound, making it harder and more complex; however, it does have the capability of varying the pitch and tone of the sound being produced.
+
+---
 
 ### IR Sensor
 
@@ -123,8 +130,7 @@ while True:
     # Begin the main program
     ...
 ```
-
-
+---
 ## Flash Memory
 
 In order to improve the practicality and usability of the project, we utilize the flash memory of the STM32 board. Our project measures and detects fruit spoilage by comparing the current readings of alcohol level and several variables of colors to the initial value when the program first began. We can obviously keep the board plugged in all the time and have the program constantly running; however, this could be quite inefficient and hard to perform tests on. In order to combat this, we would store the initial readings of the values used in flash memory, then allow the user to begin the program in memory mode to retrieve those initial values from memory instead of re-recording the initial values.
