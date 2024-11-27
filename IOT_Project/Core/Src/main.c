@@ -168,7 +168,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
 		stm_started = true;
 		use_mem = true;
-	} else {
+	} else if (!use_mem){
 		char message[] = "Starting STM32 in normal mode...\r\n";
 		HAL_UART_Transmit(&huart2, message, strlen(message), 1000);
 		stm_started = true;
@@ -319,7 +319,7 @@ int main(void)
 			  	  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
 			  	  }
 
-			  	  sprintf(json_msg, "{\"red\": %d, \"green\": %d, \"blue\": %d, \"temp\": %.2f, \"hum\": %.2f, \"alc\": %.2f, \"status\": %d}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff, prev_status);
+			  	  sprintf(json_msg, "{\"red\": %d, \"green\": %d, \"blue\": %d, \"temp\": %.2f, \"hum\": %.2f, \"alc\": %.2f, \"status\": %d}\n", red_hex, green_hex, blue_hex, DHT_22.temp_C, DHT_22.humidity, alc_diff, temp_status);
 			  	  HAL_UART_Transmit(&huart1, json_msg, strlen(buff), 1000);
         }
       } else {
