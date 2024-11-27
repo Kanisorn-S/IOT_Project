@@ -172,15 +172,10 @@ We then recheck the status of the button to see if it is being held down or not.
   - Turn Off: ```HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);```
  
 
-
-### Fruit Classification using TensorFlow Keras
-
-This project implements a fruit classification system for three classes: Apple, Banana, and Mango, using TensorFlow Keras. It leverages image preprocessing, a Convolutional Neural Network (CNN), and visual evaluation tools for performance analysis.
-
----
-
 # Fruit Classification with Webcam using Tensorflow and Keras
+This ML part implements a fruit classification system for three classes: Apple, Banana, and Mango, using TensorFlow Keras. It leverages image preprocessing, a Convolutional Neural Network (CNN), and visual evaluation tools for performance analysis.
 
+## Step by Step Process
 1. **Dataset Preprocessing**:
    - Images resized to `224x224x3`.
    - Normalized pixel values (0-1 range).
@@ -196,8 +191,12 @@ This project implements a fruit classification system for three classes: Apple, 
    - Data split: 75% training, 25% validation.
    - Augmentation: Rotation, zoom, and shifts applied dynamically.
    - Trained for 100 epochs using Adam optimizer and categorical crossentropy loss.
+  
+   
+![image](https://github.com/user-attachments/assets/afd1cf0b-4847-449f-8e1b-9fb4bdb56eed)
 
 ---
+## Visualization Method
 
 ### 1. Accuracy Graph
 
@@ -222,11 +221,14 @@ sns.heatmap(confusion_matrix(y_true, y_pred_classes), annot=True, fmt=".0f", cma
 ```
 ![confusion_matrix](https://github.com/user-attachments/assets/2e8331ad-a502-4946-b8c2-a202a9cf3a1e)
 
+
+
+
 ---
 
 ## Results
 
-- **Validation Accuracy**: Achieved high accuracy on validation data (specific value depends on the trained model).
+- **Validation Accuracy**: Achieved high accuracy on validation data (specific value depends on the trained model in this case accuracy = 0.875).
 - **Confusion Matrix**: Highlights correct and misclassified predictions across Apple, Banana, and Mango classes.
 
 ---
@@ -240,12 +242,7 @@ sns.heatmap(confusion_matrix(y_true, y_pred_classes), annot=True, fmt=".0f", cma
 - Matplotlib
 - Seaborn
 - Scikit-learn
-
-Install dependencies:
-```bash
-pip install tensorflow opencv-python numpy matplotlib seaborn scikit-learn
-```
-
+- 
 ---
 
 ## Instructions to Run
