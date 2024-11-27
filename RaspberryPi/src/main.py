@@ -181,13 +181,13 @@ fruit_conversion = {
 first_request = True
 
 # Threshold constants for temperature and humidity
-TEMP_THRESHOLD = 28
-HUM_APPLE_MIN = 90
-HUM_APPLE_MAX = 95
-HUM_BANANA_MIN = 50
-HUM_BANANA_MAX = 95
-HUM_MANGO_MIN = 90
-HUM_MANGO_MAX = 95
+TEMP_THRESHOLD = 29 # 28
+HUM_APPLE_MIN = 0 # 90
+HUM_APPLE_MAX = 1000 # 95
+HUM_BANANA_MIN = 0 # 50
+HUM_BANANA_MAX = 1000 # 95
+HUM_MANGO_MIN = 0 # 90
+HUM_MANGO_MAX = 1000 # 95
 
 # Initialize DHT22
 sensor = adafruit_dht.DHT22(board.D4)
@@ -286,9 +286,10 @@ try:
                             send_sticker(ALERT_STICKER_ID)
                             prev_status = current_status
                         else:
-                            send_message(STATUS_TWO_MESSAGE)
+                            send_message(STATUS_ZERO_MESSAGE)
                             send_sticker(OK_STICKER_ID)
                             prev_status = current_status
+                        status_debounce = 0
 
 
             except Exception as e:
