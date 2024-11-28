@@ -15,6 +15,9 @@ from utils.classify import predict_from_cap, predict_from_path
 import board
 import adafruit_dht
 from gpiozero import LED
+import sys
+import termios
+import tty
 
 # LED for status debug
 status_led = LED(26)
@@ -210,6 +213,17 @@ STATUS_DEBOUNCE_TIME = 5
 prev_status = 0
 status_debounce = 0
 
+def is_key_pressed():
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        ch = sys.stdin.read(1)
+        if ch == 'X':
+            return True
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return False
 
 try: 
 
@@ -231,6 +245,9 @@ try:
             time.sleep(1)
             uart.write(f'f{fruit_id}\n'.encode('utf-8'))
             started = True
+            break
+        if is_key_pressed():
+            print("Key 'X' pressed. Exiting...")
             break
         print("No Fruit Detected")
         time.sleep(1)
@@ -309,6 +326,9 @@ try:
         client.publish(PUBLISH_TOPIC_2, data_out, retain=True)
         print("Publish...")
         sleep(2)
+        if is_key_pressed():
+            print("Key 'X' pressed. Exiting...")
+            break
 
 except KeyboardInterrupt:
     print("Program Terminated")
@@ -316,3 +336,4 @@ except KeyboardInterrupt:
 finally:
     uart.close()
     print("Clean up...")
+    GPIO.cleanup()
