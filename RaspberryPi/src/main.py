@@ -14,6 +14,11 @@ from utils.img_bb import upload_image_to_imgbb
 from utils.classify import predict_from_cap, predict_from_path
 import board
 import adafruit_dht
+from gpiozero import LED
+
+# LED for status debug
+status_led = LED(26)
+status_led.on()
 
 # Tensorflow 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
