@@ -29,7 +29,7 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
 from utils.model import predict_fruits
 
-model = tf.keras.models.load_model('./model/new.h5')
+model = tf.keras.models.load_model('./model/realfinalone.h5')
 
 load_dotenv()
 
@@ -189,9 +189,9 @@ fruit_conversion = {
 first_request = True
 
 # Threshold constants for temperature and humidity
-TEMP_THRESHOLD = 1000 # 28
+TEMP_THRESHOLD = 29.5 # 28
 HUM_APPLE_MIN = 0 # 90
-HUM_APPLE_MAX = 1000 # 95
+HUM_APPLE_MAX = 10000 # 95
 HUM_BANANA_MIN = 0 # 50
 HUM_BANANA_MAX = 1000 # 95
 HUM_MANGO_MIN = 0 # 90
@@ -213,6 +213,10 @@ STATUS_DEBOUNCE_TIME = 5
 prev_status = 0
 status_debounce = 0
 
+# For testing
+counter = 0
+MAX_COUNTER = 10
+
 
 try: 
 
@@ -223,6 +227,7 @@ try:
             img_path = './images/current_fruit.jpg'
             os.system("libcamera-still -o ./images/current_fruit.jpg --vflip --hflip")
             fruit = predict_from_path(model, img_path)
+            fruit = "Banana"
             print("Predicted fruit: ", fruit)
             if fruit in fruit_conversion:
                 global fruit_id
@@ -265,25 +270,33 @@ try:
                 data["temp"] = temp
                 data["hum"] = hum
                 if data["status"] == 0:
-                    print("STM32 returned status 0.") 
-                    print("Current fruit_id: ", fruit_id)
+                    # print("STM32 returned status 0.") 
+                    # print("Current fruit_id: ", fruit_id)
                     if fruit_id == '0':
-                        print("Checking apple status...")
+                        # print("Checking apple status...")
                         data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_APPLE_MIN, HUM_APPLE_MAX)
-                        print(data["status"])
+                        # print(data["status"])
                     elif fruit_id == '1':
-                        print("Checking banana status...")
+                        # print("Checking banana status...")
                         data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_BANANA_MIN, HUM_BANANA_MAX)
-                        print(data["status"])
+                        # print(data["status"])
                     elif fruit_id == '2':
-                        print("Checking mango status...")
+                        # print("Checking mango status...")
                         data["status"] = temp_status(temp, TEMP_THRESHOLD, hum, HUM_MANGO_MIN, HUM_MANGO_MAX)
-                        print(data["status"])
+                        # print(data["status"])
+
 
                 current_status = str(data["status"])
                 uart.write(current_status.encode('utf-8'))
-                all_info_message = f'Red: {data["red"]}\nGreen: {data["green"]}\nBlue: {data["blue"]}\nTemperature: {temp}°C\nHumidity: {hum}%\nStatus: {current_status}'
+                status_convert = {
+                        "0": "Fresh",
+                        "1": "Risk of Rotten. Improper Storing Condition",
+                        "2": "High Risk of Spoilage",
+                }
+                status_word = status_convert[current_status]
+                all_info_message = f'Red: {data["red"]}\nGreen: {data["green"]}\nBlue: {data["blue"]}\nTemperature: {temp}°C\nHumidity: {hum}%\nAlc: {data["alc"]}\nStatus: {status_word}\n'
                 print(all_info_message)
+                print("---------------------------------------------------------------------------------------------------------")
                 if current_status != prev_status:
                     status_debounce+=1
                     if status_debounce >= STATUS_DEBOUNCE_TIME:
