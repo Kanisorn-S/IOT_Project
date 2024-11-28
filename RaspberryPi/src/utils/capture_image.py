@@ -11,7 +11,7 @@ def is_key_pressed():
     old_settings = termios.tcgetattr(fd)
     try:
         tty.setraw(fd)
-        ch = sys.stdin.read(1)
+        ch = sys.stdin.read(1).lower()
         if ch == 'a':
             return 'apple'
         elif ch == 'b':
