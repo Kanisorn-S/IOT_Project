@@ -106,7 +106,7 @@ ALERT_STICKER_ID = 52002749
 OK_STICKER_ID = 52002734
 MAD_STICKER_ID = 52002767
 # Status 2 is High Risk of Spoilage
-STATUS_TWO_MESSAGE = "Your fruit is at high risk of spoilage. Please check the fruit status."
+STATUS_TWO_MESSAGE = "Your fruit is at high risk of spoilage. Please remove the fruit from the box!"
 # Status 1 is Low Risk of Spoilage due to improper temperature or humidity
 STATUS_ONE_MESSAGE = "Your fruit is at low risk of spoilage. The storage conditions are not optimal. Please check the fruit status."
 # Status 0 is Normal
