@@ -292,6 +292,10 @@ try:
                         elif current_status == "1":
                             send_message(STATUS_ONE_MESSAGE)
                             send_sticker(ALERT_STICKER_ID)
+                            current_status_message = f"The current temperature is {temp}°C and humidity is {hum}%."
+                            optimal_status_message = f"The optimal temperature is below {TEMP_THRESHOLD}°C and humidity is between {HUM_APPLE_MIN}% and {HUM_APPLE_MAX}%."
+                            send_message(current_status_message)
+                            send_message(optimal_status_message)
                             prev_status = current_status
                         else:
                             send_message(STATUS_ZERO_MESSAGE)
