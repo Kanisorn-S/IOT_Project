@@ -26,13 +26,23 @@ def capture_image():
     os.system(f"libcamera-still -o {image_path} --vflip --hflip -t 1 --nopreview")
     print(f"Image saved to {image_path}")
 
+def start_preview():
+    os.system("libcamera-hello --timeout 0 &")
+
+def stop_preview():
+    os.system("pkill libcamera-hello")
+
 if __name__ == "__main__":
-    os.system("libcamera-hello --timeout 0")
+    start_preview()
     print("Press 'k' to capture an image.")
-    while True:
-        key = is_key_pressed()
-        if key == 'k':
-            capture_image()
-        elif key == 'x':
-            print("Exiting program.")
-            break
+    print("Press 'x' to exit the program.")
+    try:
+        while True:
+            key = is_key_pressed()
+            if key == 'k':
+                capture_image()
+            elif key == 'x':
+                print("Exiting program.")
+                break
+    finally:
+        stop_preview()
