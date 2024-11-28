@@ -12,19 +12,25 @@ def is_key_pressed():
     try:
         tty.setraw(fd)
         ch = sys.stdin.read(1)
-        if ch == 'k':
-            return 'k'
+        if ch == 'a':
+            return 'apple'
+        elif ch == 'b':
+            return 'banana'
+        elif ch == 'm':
+            return 'mango'
         elif ch == 'x':
             return 'x'
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return False
 
-def capture_image():
+def capture_image(fruit):
+    stop_preview()
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    image_path = f"./data/image_{timestamp}.jpg"
+    image_path = f"./data/{fruit}/image_{timestamp}.jpg"
     os.system(f"libcamera-still -o {image_path} --vflip --hflip -t 1 --nopreview")
     print(f"Image saved to {image_path}")
+    start_preview()
 
 def start_preview():
     os.system("libcamera-hello --timeout 0 &")
@@ -34,15 +40,17 @@ def stop_preview():
 
 if __name__ == "__main__":
     start_preview()
-    print("Press 'k' to capture an image.")
-    print("Press 'x' to exit the program.")
     try:
+        print("Press 'a' to capture an apple.")
+        print("Press 'b' to capture an banana.")
+        print("Press 'm' to capture an mango.")
+        print("Press 'x' to exit the program.")
         while True:
             key = is_key_pressed()
-            if key == 'k':
-                capture_image()
-            elif key == 'x':
+            if key == 'x':
                 print("Exiting program.")
                 break
+            else:
+                capture_image(key)
     finally:
         stop_preview()
