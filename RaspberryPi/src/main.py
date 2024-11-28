@@ -189,7 +189,7 @@ fruit_conversion = {
 first_request = True
 
 # Threshold constants for temperature and humidity
-TEMP_THRESHOLD = 29.5 # 28
+TEMP_THRESHOLD = 300.5 # 28
 HUM_APPLE_MIN = 0 # 90
 HUM_APPLE_MAX = 10000 # 95
 HUM_BANANA_MIN = 0 # 50
@@ -201,6 +201,7 @@ HUM_MANGO_MAX = 1000 # 95
 sensor = adafruit_dht.DHT22(board.D4)
 
 def temp_status(temp, temp_max, hum, hum_min, hum_max):
+    return 0
     if temp > temp_max:
         return 1
     elif hum > hum_max or hum < hum_min:
@@ -227,7 +228,7 @@ try:
             img_path = './images/current_fruit.jpg'
             os.system("libcamera-still -o ./images/current_fruit.jpg --vflip --hflip")
             fruit = predict_from_path(model, img_path)
-            fruit = "Banana"
+            # fruit = "Banana"
             print("Predicted fruit: ", fruit)
             if fruit in fruit_conversion:
                 global fruit_id
