@@ -214,6 +214,8 @@ prev_status = 0
 status_debounce = 0
 
 def is_key_pressed():
+    if not sys.stdin.isatty():
+        return False
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
