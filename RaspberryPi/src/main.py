@@ -189,7 +189,7 @@ fruit_conversion = {
 first_request = True
 
 # Threshold constants for temperature and humidity
-TEMP_THRESHOLD = 29 # 28
+TEMP_THRESHOLD = 1000 # 28
 HUM_APPLE_MIN = 0 # 90
 HUM_APPLE_MAX = 1000 # 95
 HUM_BANANA_MIN = 0 # 50
@@ -305,7 +305,7 @@ try:
 
 
             except Exception as e:
-                print(f"Error processing incoming data: {e}")
+                # print(f"Error processing incoming data: {e}")
                 continue
 
         data_out = json.dumps({"data": data})
