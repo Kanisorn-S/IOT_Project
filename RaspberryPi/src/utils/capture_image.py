@@ -13,7 +13,9 @@ def is_key_pressed():
         tty.setraw(fd)
         ch = sys.stdin.read(1)
         if ch == 'k':
-            return True
+            return 'k'
+        elif ch == 'x':
+            return 'x'
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return False
@@ -21,11 +23,16 @@ def is_key_pressed():
 def capture_image():
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     image_path = f"./data/image_{timestamp}.jpg"
-    os.system(f"libcamera-still -o {image_path} --vflip --hflip")
+    os.system(f"libcamera-still -o {image_path} --vflip --hflip -t 1 --nopreview")
     print(f"Image saved to {image_path}")
 
 if __name__ == "__main__":
+    os.system("libcamera-hello --timeout 0")
     print("Press 'k' to capture an image.")
     while True:
-        if is_key_pressed():
+        key = is_key_pressed()
+        if key == 'k':
             capture_image()
+        elif key == 'x':
+            print("Exiting program.")
+            break
