@@ -228,6 +228,9 @@ int main(void)
   int prev_status = 0;
   char fruit;
   int index = 0;
+  int counter = 0;
+  int max_counter = 20;
+  int second_max_counter = 40;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -238,6 +241,7 @@ int main(void)
 	  if(stm_started) {
       // Raspberry Pi started
       if (started) {
+    	  counter = counter + 1;
         // Main Program
         // Read Color from TCS3200
 		  	uint32_t red_frequency = TCS3200_ReadFrequency(TCS3200_COLOR_RED);
@@ -287,6 +291,13 @@ int main(void)
 			  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
 
 			  	int temp_status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
+			  	// manual set status for testing
+			  	//temp_status = 2;
+//			  	if (counter > second_max_counter) {
+//			  		temp_status = 2;
+//			  	} else if (counter > max_counter) {
+//			  		temp_status = 1;
+//			  	}
 			  	char s[8];
 			  	int status;
 			  	if (HAL_UART_Receive(&huart1, s, 1, 1000) == HAL_OK) {
@@ -339,8 +350,8 @@ int main(void)
               if (HAL_UART_Receive(&huart1, t, 2, 1000) == HAL_OK) {
                 if (t[0] == 'f') {
                   fruit = t[1];
-                  char fruity[10];
-                  sprintf(fruity, "fruit: %c", fruit);
+                  char fruity[20];
+                  sprintf(fruity, "fruit: %c\r\n", fruit);
                   HAL_UART_Transmit(&huart2, fruity, strlen(fruity), 1000);
                   know_fruit = true;
                   write_fruit_to_flash(FRUIT_ADDRESS, fruit);
