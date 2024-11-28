@@ -67,7 +67,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(SUBSCRIBE_TOPIC)
 
 def on_message(client, userdata, msg):
-    print(msg.topic + " " + str(msg.payload))
+    # print(msg.topic + " " + str(msg.payload))
     os.system("libcamera-still -o ./images/test_img.jpg --vflip --hflip")
     image_url = upload_image_to_imgbb("./images/test_img.jpg", IMGBB_API_KEY)
     url = "https://api.line.me/v2/bot/message/push"
@@ -98,7 +98,7 @@ def on_message(client, userdata, msg):
     }
 
     res = requests.post(url, headers=headers, data=json.dumps(data))
-    print(res.text)
+    # print(res.text)
     
 # Line Messaging
 PACKAGE_ID = 11537
@@ -134,7 +134,7 @@ def send_message(text: str):
     }
 
     res = requests.post(url, headers=headers, data=json.dumps(data))
-    print(res.text)
+    # print(res.text)
 
 def send_sticker(sticker_id: int):
     url = "https://api.line.me/v2/bot/message/push"
@@ -159,7 +159,7 @@ def send_sticker(sticker_id: int):
     }
 
     res = requests.post(url, headers=headers, data=json.dumps(data))
-    print(res.text)
+    # print(res.text)
     
 client = mqtt.Client(protocol=mqtt.MQTTv311, client_id=CLIENT_ID, clean_session=True)
 client.on_connect = on_connect
@@ -244,8 +244,8 @@ try:
         try:
             temp = sensor.temperature
             hum = sensor.humidity
-            print("Temp: ", temp)
-            print("Hum: ", hum)
+            # print("Temp: ", temp)
+            # print("Hum: ", hum)
         except RuntimeError as error:
             # print(error.args[0])
             sleep(2)
@@ -282,6 +282,8 @@ try:
 
                 current_status = str(data["status"])
                 uart.write(current_status.encode('utf-8'))
+                all_info_message = f'Red: {data["red"]}\nGreen: {data["green"]}\nBlue: {data["blue"]}\nTemperature: {temp}°C\nHumidity: {hum}%\nStatus: {current_status}'
+                print(all_info_message)
                 if current_status != prev_status:
                     status_debounce+=1
                     if status_debounce >= STATUS_DEBOUNCE_TIME:
@@ -314,7 +316,7 @@ try:
         # Publish to NETPIE
         client.publish(PUBLISH_TOPIC, data_out, retain=True)
         client.publish(PUBLISH_TOPIC_2, data_out, retain=True)
-        print("Publish...")
+        # print("Publish...")
         sleep(2)
 
 except KeyboardInterrupt:
