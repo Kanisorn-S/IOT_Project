@@ -285,19 +285,19 @@ int main(void)
 		      convert_colors(red_hex, green_hex, blue_hex, &l, &a, &b);
 		      get_variables(l_0, a_0, b_0, l, a, b, &normalized_l, &normalized_hue, &color_change, &normalized_browning_index);
 		      sprintf(l_l0, "Normalized L*: %.2f\r\nNormalized Hue: %.2f\r\nColor Change: %.2f\r\nNormalized Browning Index: %.2f\r\n", normalized_l, normalized_hue, color_change, normalized_browning_index);
-	  	  	sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
-			  	sprintf(mq3_readings, "Alc: %.2f \%\r\n", alc_diff);
-			  	sprintf(buff, "DHT22 Reading: %s\r\nMQ3 Reading: %s\r\nColor Variables: %s\r\n", dht22_readings, mq3_readings, l_l0);
+	  	  	// sprintf(dht22_readings, "Temp(C): %.2f C Hum: %.2f \%\r\n", DHT_22.temp_C, DHT_22.humidity);
+			  	// sprintf(mq3_readings, "Alc: %.2f \%\r\n", alc_diff);
+			  	sprintf(buff, "MQ3 Reading: %s\r\nColor Variables: %s\r\n", mq3_readings, l_l0);
 			  	HAL_UART_Transmit(&huart2, buff, strlen(buff), 1000);
 
 			  	int temp_status = check_fruit_condition(DHT_22.temp_C, alc_diff, max_alc, DHT_22.humidity, min_hum, max_hum, normalized_l, min_l, normalized_browning_index, max_bi, color_change, max_cc);
 			  	// manual set status for testing
-			  	//temp_status = 2;
-//			  	if (counter > second_max_counter) {
-//			  		temp_status = 2;
-//			  	} else if (counter > max_counter) {
-//			  		temp_status = 1;
-//			  	}
+			  	// temp_status = 2;
+          // if (counter > second_max_counter) {
+          //  temp_status = 2;
+          //} else if (counter > max_counter) {
+          //  temp_status = 1;
+          //}
 			  	char s[8];
 			  	int status;
 			  	if (HAL_UART_Receive(&huart1, s, 1, 1000) == HAL_OK) {
