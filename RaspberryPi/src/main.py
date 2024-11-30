@@ -330,7 +330,7 @@ try:
         # Publish to NETPIE
         client.publish(PUBLISH_TOPIC, data_out, retain=True)
         client.publish(PUBLISH_TOPIC_2, data_out, retain=True)
-        # print("Publish...")
+        print("Publish...")
         sleep(2)
 
 except KeyboardInterrupt:
