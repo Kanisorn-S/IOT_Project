@@ -216,7 +216,7 @@ plt.legend()
 plt.grid()
 plt.show()
 ```
-![acc_graph](https://github.com/user-attachments/assets/4294d723-4ec8-4429-88f3-bc381c8d558b)
+![acc](https://github.com/user-attachments/assets/fc2f34c7-2123-418b-9888-a547629a36a4)
 
 
 ### 2. Confusion Matrix
@@ -225,14 +225,14 @@ Shows classification performance for each class:
 from sklearn.metrics import confusion_matrix
 sns.heatmap(confusion_matrix(y_true, y_pred_classes), annot=True, fmt=".0f", cmap="Blues")
 ```
-![image](https://github.com/user-attachments/assets/58e3510c-f972-4125-ae6a-efddedd831b6)
+![cm](https://github.com/user-attachments/assets/22d20e60-1df2-4386-ac7c-194e9005de30)
 
 
 ---
 
 ## Results
 
-- **Validation Accuracy**: Achieved high accuracy on validation data (specific value depends on the trained model in this case accuracy = 0.875).
+- **Validation Accuracy**: Achieved high accuracy on validation data (specific value depends on the trained model in this case accuracy = 0.933).
 - **Confusion Matrix**: Highlights correct and misclassified predictions across Apple, Banana, and Mango classes.
 
 ---
