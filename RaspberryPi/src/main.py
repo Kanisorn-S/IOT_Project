@@ -189,13 +189,13 @@ fruit_conversion = {
 first_request = True
 
 # Threshold constants for temperature and humidity
-TEMP_THRESHOLD = 300.5 # 28
-HUM_APPLE_MIN = 0 # 90
-HUM_APPLE_MAX = 10000 # 95
-HUM_BANANA_MIN = 0 # 50
-HUM_BANANA_MAX = 1000 # 95
-HUM_MANGO_MIN = 0 # 90
-HUM_MANGO_MAX = 1000 # 95
+TEMP_THRESHOLD = 28 # 28
+HUM_APPLE_MIN = 90 # 90
+HUM_APPLE_MAX = 95 # 95
+HUM_BANANA_MIN = 50 # 50
+HUM_BANANA_MAX = 95 # 95
+HUM_MANGO_MIN = 90 # 90
+HUM_MANGO_MAX = 95 # 95
 
 # Initialize DHT22
 sensor = adafruit_dht.DHT22(board.D4)
